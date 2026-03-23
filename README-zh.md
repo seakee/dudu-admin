@@ -33,6 +33,67 @@ npm run dev
 
 Vite 开发服务器默认监听 `http://localhost:3000`。
 
+### Docker / Compose 本地联调
+
+如果你希望直接启动完整的本地联调栈，可以使用仓库内的 `compose.yml`。当前编排包含：
+
+- `frontend`：当前前端项目，使用 Nginx 托管构建产物并反向代理 `/dudu-admin-api`
+- `backend`：本地 `dudu-admin-api` 仓库
+- `mysql`：后端初始化所需数据库
+- `redis`：后端缓存依赖
+
+使用前请确认：
+
+- 已安装 Docker 与 Docker Compose
+- 本机已存在 `dudu-admin-api` 仓库
+- 若目录结构与当前示例不同，请先调整 `.env.compose.example` 中的 `DUDU_ADMIN_API_DIR`
+
+启动：
+
+```bash
+docker compose --env-file .env.compose.example up --build -d
+```
+
+查看状态：
+
+```bash
+docker compose --env-file .env.compose.example ps
+```
+
+停止并清理容器网络：
+
+```bash
+docker compose --env-file .env.compose.example down
+```
+
+如果你希望连同 MySQL / Redis 数据卷一起清空，并重新执行初始化 SQL：
+
+```bash
+docker compose --env-file .env.compose.example down -v
+```
+
+默认访问地址：
+
+- 前端：`http://localhost:3000`
+- 后端：`http://localhost:8080`
+- 后端健康检查：`http://localhost:8080/dudu-admin-api/external/ping`
+- 通过前端代理访问后端健康检查：`http://localhost:3000/dudu-admin-api/external/ping`
+
+默认本地管理员：
+
+- 显示用户名：`local-admin`
+- 登录邮箱：`local-admin@example.com`
+- 登录手机号：`13800000000`
+- 明文密码：`LocalAdmin123!`
+
+补充说明：
+
+- Compose 会通过 `docker/backend/local.json` 模板和 `docker/backend/start.sh` 生成后端最终配置
+- `backend` 已增加 healthcheck，`frontend` 会等待后端健康后再进入依赖链
+- MySQL 会先执行后端仓库中的 `bin/data/sql/mysql/init.sql`，再执行当前仓库的 `docker/mysql/02-local-admin.sql` 覆盖本地管理员信息
+- `.env.compose.example` 中统一维护本地 MySQL 密码和 JWT 密钥；本地管理员示例账号定义在 `docker/mysql/02-local-admin.sql`
+- 上述示例值仅用于本地联调，不适用于生产环境
+
 ## 与后端联调
 
 ### 推荐本地联调顺序

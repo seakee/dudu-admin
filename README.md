@@ -33,6 +33,67 @@ npm run dev
 
 The Vite dev server listens on `http://localhost:3000`.
 
+### Docker / Compose Local Integration
+
+If you want to boot the full local integration stack directly, use the repository `compose.yml`. The current setup contains:
+
+- `frontend`: the current frontend project, served by Nginx and proxying `/dudu-admin-api`
+- `backend`: the local `dudu-admin-api` repository
+- `mysql`: the database required by backend initialization
+- `redis`: the cache dependency used by the backend
+
+Before using it, make sure:
+
+- Docker and Docker Compose are installed
+- the `dudu-admin-api` repository already exists on your machine
+- if your directory layout differs from the example, update `DUDU_ADMIN_API_DIR` in `.env.compose.example`
+
+Start the stack:
+
+```bash
+docker compose --env-file .env.compose.example up --build -d
+```
+
+Check service status:
+
+```bash
+docker compose --env-file .env.compose.example ps
+```
+
+Stop the stack and remove the network:
+
+```bash
+docker compose --env-file .env.compose.example down
+```
+
+If you also want to remove MySQL / Redis volumes and rerun initialization SQL from scratch:
+
+```bash
+docker compose --env-file .env.compose.example down -v
+```
+
+Default URLs:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:8080`
+- Backend health check: `http://localhost:8080/dudu-admin-api/external/ping`
+- Backend health check through the frontend proxy: `http://localhost:3000/dudu-admin-api/external/ping`
+
+Default local admin account:
+
+- Display username: `local-admin`
+- Login email: `local-admin@example.com`
+- Login phone: `13800000000`
+- Plain-text password: `LocalAdmin123!`
+
+Additional notes:
+
+- Compose generates the final backend config from `docker/backend/local.json` and `docker/backend/start.sh`
+- `backend` now has a healthcheck, and `frontend` waits for backend health before entering the dependency chain
+- MySQL first runs `bin/data/sql/mysql/init.sql` from the backend repository, then runs `docker/mysql/02-local-admin.sql` from this repository to override the local admin record
+- `.env.compose.example` is now the single place for local MySQL passwords and JWT secrets; the sample local admin account is defined in `docker/mysql/02-local-admin.sql`
+- These example values are for local development only and must not be used in production
+
 ## Backend Integration
 
 ### Recommended Local Workflow
