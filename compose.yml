@@ -1,0 +1,75 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${DUDU_ADMIN_FRONTEND_PORT:-3000}:80"
+
+  backend:
+    build:
+      context: ${DUDU_ADMIN_API_DIR:-../../Golang/src/github.com/seakee/dudu-admin-api}
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    entrypoint: ["/compose-config/start.sh"]
+    environment:
+      APP_NAME: dudu-admin-api
+      DUDU_ADMIN_MYSQL_PASSWORD: ${DUDU_ADMIN_MYSQL_PASSWORD:-change-me-local-db-password}
+      DUDU_ADMIN_BACKEND_JWT_SECRET: ${DUDU_ADMIN_BACKEND_JWT_SECRET:-local-compose-jwt-secret}
+      DUDU_ADMIN_BACKEND_ADMIN_JWT_SECRET: ${DUDU_ADMIN_BACKEND_ADMIN_JWT_SECRET:-local-compose-admin-jwt-secret}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/dudu-admin-api/external/ping >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    volumes:
+      - ./docker/backend:/compose-config:ro
+    ports:
+      - "${DUDU_ADMIN_API_PORT:-8080}:8080"
+
+  mysql:
+    image: mysql:8.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DUDU_ADMIN_MYSQL_DATABASE:-dudu-admin-api}
+      MYSQL_USER: ${DUDU_ADMIN_MYSQL_USER:-dudu-admin-api}
+      MYSQL_PASSWORD: ${DUDU_ADMIN_MYSQL_PASSWORD:-change-me-local-db-password}
+      MYSQL_ROOT_PASSWORD: ${DUDU_ADMIN_MYSQL_ROOT_PASSWORD:-change-me-local-root-password}
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "${DUDU_ADMIN_MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ${DUDU_ADMIN_API_DIR:-../../Golang/src/github.com/seakee/dudu-admin-api}/bin/data/sql/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./docker/mysql/02-local-admin.sql:/docker-entrypoint-initdb.d/02-local-admin.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ports:
+      - "${DUDU_ADMIN_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
