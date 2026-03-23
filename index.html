@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>%VITE_APP_TITLE%</title>
+    <style>
+      html {
+        --app-bg: #eff2f7;
+        --app-bg-gradient: linear-gradient(120deg, #f6f0ff 0%, #e9f1ff 50%, #f1f6ff 100%);
+      }
+      html.dark {
+        --app-bg: #0a0a0a;
+        --app-bg-gradient: linear-gradient(120deg, #151521 0%, #0f1522 50%, #0b121c 100%);
+      }
+      html,
+      body {
+        background-color: var(--app-bg);
+        background-image: var(--app-bg-gradient);
+      }
+    </style>
+    <script>
+      (() => {
+        try {
+          const raw = localStorage.getItem('app')
+          const data = raw ? JSON.parse(raw) : null
+          const theme = data?.theme || data?.state?.theme || 'auto'
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          const shouldDark = theme === 'dark' || (theme === 'auto' && prefersDark)
+          if (shouldDark) document.documentElement.classList.add('dark')
+        } catch {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

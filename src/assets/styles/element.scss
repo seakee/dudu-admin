@@ -1,0 +1,214 @@
+/* Element Plus 主题变量覆盖 */
+@forward 'element-plus/theme-chalk/src/common/var.scss';
+
+/* 自定义 CSS 变量 */
+:root {
+  /* 明亮主题基础设计 token */
+  --app-bg: #eff2f7;
+  --app-bg-gradient: linear-gradient(120deg, #f0f7ff 0%, #e7f2ff 50%, #edf7ff 100%);
+  --app-bg-blob-1-start: #7aa2ff;
+  --app-bg-blob-1-end: #b6d4ff;
+  --app-bg-blob-2-start: #6bc5ff;
+  --app-bg-blob-2-end: #7debdc;
+  --app-bg-blob-1-opacity: 0.5;
+  --app-bg-blob-2-opacity: 0.5;
+  --app-bg-blob-blur: 60px;
+  --app-surface: rgba(255, 255, 255, 0.90);
+  --app-surface-strong: #ffffff;
+  --app-surface-muted: rgba(255, 255, 255, 0.6);
+  --app-border: rgba(15, 23, 42, 0.08);
+  --app-border-strong: rgba(15, 23, 42, 0.12);
+  --app-shadow: 0 12px 32px rgba(31, 38, 135, 0.12);
+  --app-shadow-soft: 0 6px 16px rgba(31, 38, 135, 0.08);
+  --app-text-primary: #2c3e50;
+  --app-text-regular: #5f6c7b;
+  --app-text-muted: #8b95a6;
+  --app-accent: #667eea;
+  --app-accent-soft: rgba(102, 126, 234, 0.12);
+  --app-radius-lg: 20px;
+  --app-radius-md: 12px;
+  --app-radius-sm: 8px;
+  --app-gap: 20px;
+  --app-card-padding: 24px;
+  --app-blur: 20px;
+
+  /* Element Plus 亮色变量对齐 */
+  --el-bg-color: #f6f8fc;
+  --el-bg-color-overlay: var(--app-surface);
+  --el-text-color-primary: var(--app-text-primary);
+  --el-text-color-regular: var(--app-text-regular);
+  --el-text-color-secondary: var(--app-text-muted);
+  --el-border-color-light: var(--app-border);
+  --el-border-color-lighter: rgba(15, 23, 42, 0.06);
+  --el-fill-color-blank: var(--app-surface-strong);
+  --el-fill-color-light: var(--app-surface-muted);
+  --el-card-bg-color: var(--app-surface);
+  --el-card-border-color: var(--app-border);
+  --el-card-border-radius: var(--app-radius-lg);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: rgba(255, 255, 255, 0.6);
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.5);
+
+  /* 菜单背景设为透明以支持玻璃拟态 */
+  --el-menu-bg-color: transparent;
+  --el-menu-hover-bg-color: var(--app-accent-soft);
+  --el-menu-text-color: var(--app-text-regular);
+  --el-menu-active-color: var(--app-accent);
+  --el-menu-item-height: 50px;
+
+  /* 侧边栏专用变量 */
+  --sidebar-bg-color: rgba(255, 255, 255, 0.72);
+  --sidebar-text-color: var(--app-text-regular);
+  --sidebar-active-text-color: var(--app-text-primary);
+  --sidebar-hover-bg-color: rgba(102, 126, 234, 0.08);
+  --sidebar-logo-bg-color: rgba(255, 255, 255, 0.82);
+  --sidebar-shadow: 2px 0 12px rgba(31, 38, 135, 0.12);
+  --sidebar-width: 210px;
+
+  /* 玻璃拟态变量 */
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-shadow: var(--app-shadow);
+  --primary-gradient: linear-gradient(135deg, #0A7EDC 0%, #32A6FF 100%);
+  --app-input-bg: rgba(255, 255, 255, 0.6);
+  --app-input-bg-focus: #ffffff;
+  --app-input-border: var(--app-border-strong);
+  --app-input-border-focus: var(--el-color-primary);
+
+  /* 兼容旧变量 */
+  --text-color-primary: var(--app-text-primary);
+  --text-color-regular: var(--app-text-regular);
+}
+
+/* 侧边栏深色模式适配 */
+html.dark {
+  --app-bg: #0a0a0a;
+  --app-bg-gradient: linear-gradient(120deg, #0b1324 0%, #0a1426 50%, #091521 100%);
+  --app-bg-blob-1-start: #1b2a55;
+  --app-bg-blob-1-end: #27325c;
+  --app-bg-blob-2-start: #0f3d59;
+  --app-bg-blob-2-end: #0c4a4f;
+  --app-bg-blob-1-opacity: 0.35;
+  --app-bg-blob-2-opacity: 0.3;
+  --app-bg-blob-blur: 70px;
+  --app-surface: rgba(24, 28, 40, 0.9);
+  --app-surface-strong: #1b1f2a;
+  --app-surface-muted: rgba(255, 255, 255, 0.08);
+  --app-border: rgba(255, 255, 255, 0.08);
+  --app-border-strong: rgba(255, 255, 255, 0.12);
+  --app-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --app-shadow-soft: 0 8px 20px rgba(0, 0, 0, 0.45);
+  --app-text-primary: #e5e5e5;
+  --app-text-regular: #a3a3a3;
+  --app-text-muted: #7a7a7a;
+  --app-accent-soft: rgba(102, 126, 234, 0.2);
+
+  --glass-bg: rgba(24, 28, 40, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --app-input-bg: var(--app-surface-strong);
+  --app-input-bg-focus: var(--app-surface-strong);
+  --app-input-border: var(--app-border-strong);
+  --app-input-border-focus: var(--el-color-primary);
+
+  --sidebar-bg-color: transparent;
+  --sidebar-logo-bg-color: transparent;
+  --sidebar-hover-bg-color: rgba(255, 255, 255, 0.05);
+  --sidebar-text-color: #a3a3a3;
+  --sidebar-active-text-color: #ffffff;
+  --sidebar-shadow: 2px 0 12px rgba(0, 0, 0, 0.5);
+
+  /* 全局深色背景 - 统一色调 */
+  --el-bg-color: #0b0f16;
+  --el-bg-color-overlay: rgba(24, 28, 40, 0.85);
+  --el-text-color-primary: var(--app-text-primary);
+  --el-text-color-regular: var(--app-text-regular);
+  --el-text-color-secondary: var(--app-text-muted);
+  --el-border-color-light: var(--app-border);
+  --el-border-color-lighter: rgba(255, 255, 255, 0.06);
+  --el-fill-color-blank: var(--app-surface-strong);
+  --el-fill-color-light: #1b1f2a;
+
+  /* 卡片和表格的深色适配 */
+  --el-card-bg-color: var(--app-surface);
+  --el-card-border-color: var(--app-border);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: rgba(255, 255, 255, 0.04);
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.06);
+}
+
+html.dark {
+  .el-card {
+    background-color: var(--el-card-bg-color);
+    border: 1px solid var(--el-card-border-color);
+  }
+
+  .el-table {
+    background-color: transparent;
+    --el-table-bg-color: transparent;
+
+    tr {
+      background-color: transparent;
+    }
+
+    th.el-table__cell {
+      background-color: var(--el-table-header-bg-color);
+    }
+  }
+
+  .el-drawer {
+    background-color: #141414;
+  }
+}
+
+/* 覆盖 Element Plus 默认样式以适配玻璃效果 */
+.el-menu {
+  border-right: none !important;
+  background-color: transparent !important;
+}
+
+.el-menu-item,
+.el-sub-menu__title {
+  &:hover {
+    background-color: var(--el-menu-hover-bg-color) !important;
+    color: var(--el-menu-active-color) !important;
+  }
+}
+
+.el-menu-item.is-active {
+  background-color: var(--app-accent-soft) !important;
+  font-weight: 600;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary-gradient);
+    border-radius: 0 4px 4px 0;
+  }
+}
+
+.el-sub-menu .el-menu {
+  background-color: transparent !important;
+}
+
+.el-card {
+  --el-card-border-radius: var(--app-radius-lg);
+  border-radius: var(--el-card-border-radius);
+}
+
+.el-form--inline .el-form-item {
+  margin-bottom: 0;
+  vertical-align: middle;
+  display: inline-flex;
+  align-items: center;
+}
+
+.el-form--inline .el-form-item__content > .el-input {
+  width: 200px;
+}

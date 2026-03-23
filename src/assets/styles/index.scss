@@ -1,0 +1,307 @@
+@use './transition.scss';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  background-color: var(--app-bg);
+  color: var(--app-text-primary);
+}
+
+/* 弹窗打开时由 Element Plus 自己处理锁屏；不要强制开启 body/html 滚动条，否则会导致页面左右抖动 */
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--el-border-color-darker);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--el-fill-color-light);
+}
+
+/* 深色模式下的背景适配 */
+html.dark {
+  body {
+    background-color: var(--app-bg);
+    color: var(--app-text-primary);
+  }
+}
+
+/* NProgress 样式覆盖 */
+#nprogress .bar {
+  background: var(--el-color-primary) !important;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px var(--el-color-primary), 0 0 5px var(--el-color-primary) !important;
+}
+
+/* 页面卡片与公共样式 */
+.page-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--app-blur));
+  -webkit-backdrop-filter: blur(var(--app-blur));
+
+  .el-card__header {
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--app-text-primary);
+    font-weight: 600;
+    padding: 16px var(--app-card-padding);
+  }
+
+  .el-card__body {
+    padding: var(--app-card-padding);
+  }
+}
+
+.page-card--search,
+.page-card--toolbar,
+.page-card--table,
+.page-card--welcome,
+.page-card--stat {
+  margin-bottom: var(--app-gap);
+}
+
+.page-card--stat {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--app-shadow);
+  }
+}
+
+.page-card--table {
+  .pagination {
+    margin-top: var(--app-gap);
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  white-space: nowrap;
+
+  .el-button {
+    margin: 0;
+    min-height: auto;
+    height: auto;
+    line-height: 1.2;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  .el-button + .el-button {
+    position: relative;
+    margin-left: 0;
+    padding-left: 16px;
+
+    &::before {
+      content: '｜';
+      position: absolute;
+      left: 6px;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--el-text-color-placeholder);
+      font-weight: 400;
+      line-height: 1;
+      pointer-events: none;
+    }
+  }
+}
+
+.table-action-column .cell {
+  white-space: nowrap;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--app-radius-lg);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--app-blur));
+  -webkit-backdrop-filter: blur(var(--app-blur));
+  padding: var(--app-card-padding);
+  margin-bottom: var(--app-gap);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--app-shadow);
+  }
+}
+
+.glass-form {
+  .el-input__wrapper {
+    background-color: var(--app-input-bg);
+    box-shadow: none;
+    border: 1px solid var(--app-input-border);
+    border-radius: var(--app-radius-sm);
+  }
+
+  .el-input__wrapper.is-focus {
+    background: var(--app-input-bg-focus);
+    box-shadow: 0 0 0 1px var(--app-input-border-focus) inset;
+  }
+}
+
+.glass-btn {
+  background: var(--primary-gradient);
+  border: none;
+  font-weight: 600;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+
+@font-face {
+  font-family: 'iconfont';
+  src: url('//at.alicdn.com/t/c/font_4708784_ndgyxds6rqf.ttf?t=1728725206567') format('truetype');
+}
+
+.iconfont {
+  font-family: 'iconfont' !important;
+  font-size: 20px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dudu-icon-qiyeweixin:before {
+  content: '\e605';
+}
+
+.dudu-feishu:before {
+  content: '\e74a';
+}
+
+html.dark {
+  .glass-form {
+    .el-input__wrapper {
+      background-color: var(--app-input-bg);
+      border-color: var(--app-input-border);
+    }
+
+    .el-input__wrapper.is-focus {
+      background-color: var(--app-input-bg-focus);
+    }
+  }
+
+  .el-form-item__label {
+    color: var(--app-text-regular);
+  }
+
+  .el-input__wrapper,
+  .el-textarea__inner,
+  .el-select__wrapper {
+    background-color: var(--app-input-bg);
+    border-color: var(--app-input-border);
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: none;
+  }
+
+  .el-input__wrapper.is-focus,
+  .el-textarea__inner:focus,
+  .el-select__wrapper.is-focused {
+    border-color: var(--app-input-border-focus);
+    box-shadow: 0 0 0 1px var(--app-input-border-focus) inset;
+  }
+
+  .el-input__inner,
+  .el-textarea__inner {
+    color: var(--app-text-primary);
+  }
+
+  .el-input__inner::placeholder,
+  .el-textarea__inner::placeholder {
+    color: var(--app-text-muted);
+  }
+
+  .el-input.is-disabled .el-input__wrapper,
+  .el-textarea.is-disabled .el-textarea__inner {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .el-table {
+    color: var(--app-text-regular);
+  }
+
+  .el-table th.el-table__cell {
+    color: var(--app-text-muted);
+  }
+
+  .el-table__cell {
+    border-bottom-color: var(--app-border);
+  }
+
+  .el-table--striped .el-table__body tr.el-table__row--striped > td {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  .el-table__body tr:hover > td {
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .el-table__body tr.current-row > td {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .el-pagination {
+    color: var(--app-text-regular);
+
+    .btn-prev,
+    .btn-next,
+    .el-pager li {
+      background: transparent;
+      color: var(--app-text-regular);
+    }
+  }
+
+  .el-tag {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--app-text-regular);
+  }
+
+  .el-button--text {
+    color: var(--el-color-primary);
+  }
+}
