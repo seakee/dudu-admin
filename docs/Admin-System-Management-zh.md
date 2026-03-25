@@ -27,14 +27,16 @@
 ```json
 {
   "code": 0,
-  "msg": "OK",
+  "msg": "ok",
   "trace": {
-    "id": "f3f7a9f6ee024934",
-    "desc": "" // debug 模式记录详细错误
+    "id": "afeade2f5957-tcdtjo-gdmaj",
+    "desc": ""
   },
   "data": {}
 }
 ```
+
+> **`trace.desc` 说明**：在 debug 模式下，该字段可能包含详细错误信息。
 
 > **字段命名说明**：部分接口直接返回 GORM 模型，字段会同时包含 `ID/CreatedAt/UpdatedAt/DeletedAt`（驼峰）与业务字段（多数为下划线）。
 
@@ -83,7 +85,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": null
   }
   ```
@@ -153,7 +159,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "list": [
         {
@@ -288,7 +298,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": [1, 2, 3]
   }
   ```
@@ -341,7 +355,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": null
   }
   ```
@@ -369,7 +387,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": null
   }
   ```
@@ -402,7 +424,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "list": [
         {
@@ -507,7 +533,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": [
       {"id": 1, "name": "管理员"},
       {"id": 2, "name": "编辑"}
@@ -677,7 +707,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "items": [
         {
@@ -746,7 +780,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "GET": [
         "/{apiPrefix}/internal/admin/system/user",
@@ -776,7 +814,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "用户管理": [
         {"id": 1, "name": "查看用户", "method": "GET", "path": "/user"},
@@ -926,7 +968,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "items": [
         {
@@ -1091,7 +1137,11 @@
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "items": [
         {
