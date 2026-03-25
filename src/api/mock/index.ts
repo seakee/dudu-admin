@@ -21,6 +21,10 @@ function createChallengeId(prefix: string) {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
+function createMockTraceId() {
+    return `mock-trace-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 function getMockRpId() {
     if (typeof window === 'undefined' || !window.location.hostname) {
         return 'localhost'
@@ -119,11 +123,15 @@ export function useMockAdapter(service: AxiosInstance) {
         console.log(`[Mock] ${method?.toUpperCase()} ${requestUrl}`, params || '');
 
         // 创建响应的辅助函数
-        const createResponse = (responseData: unknown, code = 0, msg = 'success'): AxiosResponse => {
+        const createResponse = (responseData: unknown, code = 0, msg = 'ok'): AxiosResponse => {
             return {
                 data: {
                     code,
                     msg,
+                    trace: {
+                        id: createMockTraceId(),
+                        desc: ''
+                    },
                     data: responseData
                 },
                 status: 200,
