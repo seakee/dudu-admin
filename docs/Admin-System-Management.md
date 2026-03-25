@@ -27,14 +27,16 @@ System management APIs are used by the admin console to maintain core system dat
 ```json
 {
   "code": 0,
-  "msg": "OK",
+  "msg": "ok",
   "trace": {
-    "id": "f3f7a9f6ee024934",
-    "desc": "" // detailed error text in debug mode
+    "id": "afeade2f5957-tcdtjo-gdmaj",
+    "desc": ""
   },
   "data": {}
 }
 ```
+
+> **`trace.desc` note**: in debug mode, this field may contain detailed error text.
 
 > **Field naming note**: some endpoints return GORM models directly, so the payload may contain both `ID/CreatedAt/UpdatedAt/DeletedAt` (camel case) and business fields (mostly snake case).
 
@@ -83,7 +85,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": null
   }
   ```
@@ -153,7 +159,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "list": [
         {
@@ -288,7 +298,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": [1, 2, 3]
   }
   ```
@@ -341,7 +355,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": null
   }
   ```
@@ -369,7 +387,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": null
   }
   ```
@@ -402,7 +424,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "list": [
         {
@@ -507,7 +533,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": [
       {"id": 1, "name": "管理员"},
       {"id": 2, "name": "编辑"}
@@ -677,7 +707,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "items": [
         {
@@ -746,7 +780,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "GET": [
         "/{apiPrefix}/internal/admin/system/user",
@@ -776,7 +814,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "用户管理": [
         {"id": 1, "name": "查看用户", "method": "GET", "path": "/user"},
@@ -926,7 +968,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "items": [
         {
@@ -1091,7 +1137,11 @@ System management APIs are used by the admin console to maintain core system dat
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "items": [
         {

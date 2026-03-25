@@ -53,9 +53,9 @@ The full business route prefix for the auth module is `/{apiPrefix}/internal/adm
 ```json
 {
   "code": 0,
-  "msg": "OK",
+  "msg": "ok",
   "trace": {
-    "id": "f3f7a9f6ee024934",
+    "id": "afeade2f5957-tcdtjo-gdmaj",
     "desc": ""
   },
   "data": {}
@@ -508,12 +508,16 @@ Additional notes:
 - **Path**: `/{apiPrefix}/internal/admin/auth/token`
 - **Auth**: No
 - **Body**: `AuthParam`
-- **Response**: `AccessToken`
+- **Response payload (`data`)**: `AccessToken`
 - **Example when OAuth is not bound**:
   ```json
   {
     "code": 11042,
     "msg": "NeedBindOAuth",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "bind_ticket": "BIND_TICKET",
       "oauth_profile": {
@@ -536,15 +540,23 @@ Additional notes:
 - **Method**: GET
 - **Path**: `/{apiPrefix}/internal/admin/auth/profile`
 - **Auth**: Yes
-- **Response**:
+- **Response example**:
   ```json
   {
-    "id": 1,
-    "user_name": "admin",
-    "avatar": "https://...",
-    "email": "a***n@e*****e.com",
-    "phone": "+86*******0000",
-    "role_name": "管理员"
+    "code": 0,
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
+    "data": {
+      "id": 1,
+      "user_name": "admin",
+      "avatar": "https://...",
+      "email": "a***n@e*****e.com",
+      "phone": "+86*******0000",
+      "role_name": "管理员"
+    }
   }
   ```
 - **Identifier field notes**:
@@ -671,7 +683,15 @@ Additional notes:
 - **Response example when stage 1 still requires TFA**:
   ```json
   {
-    "safe_code": "SAFE_CODE"
+    "code": 11028,
+    "msg": "<server message>",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
+    "data": {
+      "safe_code": "SAFE_CODE"
+    }
   }
   ```
 
@@ -686,7 +706,15 @@ Additional notes:
 - **Successful response**:
   ```json
   {
-    "reauth_ticket": "REAUTH_TICKET"
+    "code": 0,
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
+    "data": {
+      "reauth_ticket": "REAUTH_TICKET"
+    }
   }
   ```
 
@@ -702,7 +730,7 @@ Additional notes:
 - **Method**: GET
 - **Path**: `/{apiPrefix}/internal/admin/auth/reauth/methods`
 - **Auth**: Yes
-- **Successful response**:
+- **Successful response payload (`data`)**:
   - `default_method`: `passkey` / `password`
   - `available_methods`: list of currently available methods
   - `password_requires_totp`: whether the password flow still requires a TOTP step
@@ -734,10 +762,18 @@ Additional notes:
   | safe_code | string | Yes | Safe code returned by `POST /reauth/password` |
   | totp_code | string | Yes | Current user's TOTP code |
 
-- **Successful response**:
+- **Successful response example**:
   ```json
   {
-    "reauth_ticket": "REAUTH_TICKET"
+    "code": 0,
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
+    "data": {
+      "reauth_ticket": "REAUTH_TICKET"
+    }
   }
   ```
 
@@ -745,7 +781,7 @@ Additional notes:
 - **Method**: POST
 - **Path**: `/{apiPrefix}/internal/admin/auth/reauth/passkey/options`
 - **Auth**: Yes
-- **Response**: `PasskeyOptionsResult`
+- **Response payload (`data`)**: `PasskeyOptionsResult`
 
 ### 6.9.5 Finish Passkey Verification for Sensitive Operations
 - **Method**: POST
@@ -758,10 +794,18 @@ Additional notes:
   | challenge_id | string | Yes | Verification request identifier returned by `POST /reauth/passkey/options` |
   | credential | object | Yes | Browser-returned `PasskeyCredential` |
 
-- **Successful response**:
+- **Successful response example**:
   ```json
   {
-    "reauth_ticket": "REAUTH_TICKET"
+    "code": 0,
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
+    "data": {
+      "reauth_ticket": "REAUTH_TICKET"
+    }
   }
   ```
 
@@ -792,7 +836,11 @@ Additional notes:
   ```json
   {
     "code": 0,
-    "msg": "OK",
+    "msg": "ok",
+    "trace": {
+      "id": "afeade2f5957-tcdtjo-gdmaj",
+      "desc": ""
+    },
     "data": {
       "token": "JWT_TOKEN",
       "expires_in": 7200
@@ -861,7 +909,7 @@ Additional notes:
 - **Method**: POST
 - **Path**: `/{apiPrefix}/internal/admin/auth/passkey/login/options`
 - **Auth**: No
-- **Response**: `PasskeyOptionsResult`
+- **Response payload (`data`)**: `PasskeyOptionsResult`
 - **Notes**:
   - `data.options` is the outer WebAuthn login options object and can be passed directly to `navigator.credentials.get(data.options)`.
   - No account identifier is required. The server generates the options needed for discoverable Passkey login.
@@ -881,7 +929,7 @@ Additional notes:
   | challenge_id | string | Yes | Verification request identifier returned by `POST /passkey/login/options` |
   | credential | object | Yes | Browser-returned `PasskeyCredential` |
 
-- **Successful response**: `AccessToken`
+- **Successful response payload (`data`)**: `AccessToken`
 - **Error Codes**: `400`, `11002`, `11050`, `11051`, `11052`, `11054`, `500`
 
 ---
@@ -897,7 +945,7 @@ Additional notes:
   | reauth_ticket | string | Yes | Ticket obtained from the unified sensitive-operation verification flow |
   | display_name | string | No | Custom device display name. When empty, the backend generates it from the user profile |
 
-- **Response**: `PasskeyOptionsResult`
+- **Response payload (`data`)**: `PasskeyOptionsResult`
 - **Notes**:
   - `data.options` is the outer WebAuthn registration options object and can be passed directly to `navigator.credentials.create(data.options)`.
   - This endpoint consumes `reauth_ticket` after the challenge is generated successfully.
@@ -916,7 +964,7 @@ Additional notes:
   | challenge_id | string | Yes | Verification request identifier returned by `POST /passkey/register/options` |
   | credential | object | Yes | Browser-returned `PasskeyCredential` |
 
-- **Successful response**: `PasskeyItem`
+- **Successful response payload (`data`)**: `PasskeyItem`
 - **Error Codes**: `400`, `11002`, `11050`, `11051`, `11053`, `11054`, `11055`, `500` + auth error codes from section 3
 
 ---
@@ -995,7 +1043,7 @@ Additional notes:
 - **Method**: GET
 - **Path**: `/{apiPrefix}/internal/admin/auth/tfa/key`
 - **Auth**: Yes
-- **Response**:
+- **Response payload (`data`)**:
 
   | Field | Type | Description |
   | ---- | ---- | ---- |
@@ -1010,7 +1058,7 @@ Additional notes:
 - **Method**: GET
 - **Path**: `/{apiPrefix}/internal/admin/auth/tfa/status`
 - **Auth**: Yes
-- **Response**:
+- **Response payload (`data`)**:
 
   | Field | Type | Description |
   | ---- | ---- | ---- |
