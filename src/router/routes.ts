@@ -166,3 +166,19 @@ export const asyncRoutes: RouteRecordRaw[] = [
     meta: { hidden: true }
   }
 ]
+
+export function getBaseRoutes(): RouteRecordRaw[] {
+  return [
+    ...constantRoutes,
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'ProtectedRoutePlaceholder',
+      component: () => import('@/layouts/default/index.vue'),
+      meta: {
+        hidden: true,
+        requiresAuth: true,
+        bootstrapPlaceholder: true
+      }
+    }
+  ]
+}

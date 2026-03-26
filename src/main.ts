@@ -8,9 +8,10 @@ import '@fortawesome/fontawesome-free/css/all.min.css'
 
 import App from './App.vue'
 import router from './router'
-import { setupStore } from './stores'
+import { setupStore, useAuthStore } from './stores'
 import { setupDirectives } from './directives'
 import { i18n } from './i18n'
+import { ensureDynamicRoutesReady } from './router/bootstrap'
 
 import '@/assets/styles/index.scss'
 import '@/router/guard'
@@ -23,11 +24,19 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 app.use(i18n)
-setupStore(app)
-setupDirectives(app)
-app.use(router)
+async function bootstrapApp() {
+  setupStore(app)
+  setupDirectives(app)
 
-// 挂载应用
-router.isReady().then(() => {
+  try {
+    await ensureDynamicRoutesReady()
+  } catch {
+    useAuthStore().resetAuth()
+  }
+
+  app.use(router)
+  await router.isReady()
   app.mount('#app')
-})
+}
+
+void bootstrapApp()

@@ -5,9 +5,8 @@ import type { FormInstance, FormRules } from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import type { RouteRecordRaw } from 'vue-router'
 import { getMenuTree, createMenu, updateMenu, deleteMenu } from '@/api/permission'
-import router, { resetRouter } from '@/router'
+import { refreshDynamicRoutes } from '@/router/bootstrap'
 import { constantRoutes, asyncRoutes } from '@/router/routes'
-import { useAuthStore, usePermissionStore } from '@/stores'
 import type { Menu } from '@/types/api'
 import { useI18n } from 'vue-i18n'
 import { useFormLabelWidth } from '@/composables/useFormLabelWidth'
@@ -23,8 +22,6 @@ const iconPickerVisible = ref(false)
 const iconSearchKeyword = ref('')
 const { t } = useI18n()
 const formLabelWidth = useFormLabelWidth()
-const authStore = useAuthStore()
-const permissionStore = usePermissionStore()
 
 const formRef = ref<FormInstance>()
 const form = reactive({
@@ -376,15 +373,7 @@ function getMenuDisplayName(menu: Menu): string {
 }
 
 async function refreshGlobalMenuData() {
-  const menus = await authStore.getMenus()
-
-  resetRouter()
-  permissionStore.resetRoutes()
-
-  const routesToAdd = permissionStore.generateRoutes(menus)
-  routesToAdd.forEach((route) => {
-    router.addRoute(route)
-  })
+  await refreshDynamicRoutes()
 }
 
 async function handleAdd(parent?: Menu) {
