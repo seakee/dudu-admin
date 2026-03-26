@@ -33,3 +33,12 @@ const columnLabel = computed(() => props.label || t('common.actions'))
     </template>
   </el-table-column>
 </template>
+
+<style scoped lang="scss">
+.action-buttons {
+  :deep(.el-button.is-link) {
+    --el-button-hover-link-text-color: var(--el-color-primary);
+    --el-button-active-color: var(--el-color-primary);
+  }
+}
+</style>

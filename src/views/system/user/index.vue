@@ -579,7 +579,8 @@ onMounted(() => {
           >
             <template #default="{ row }">
               <el-button
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="handleDetail(row)"
               >
@@ -607,7 +608,8 @@ onMounted(() => {
                     placement="top"
                   >
                     <el-button
-                      type="text"
+                      link
+                      type="primary"
                       size="small"
                       class="user-name-button"
                       @click="handleDetail(row)"
@@ -687,7 +689,8 @@ onMounted(() => {
               <div class="user-row-actions">
                 <el-button
                   v-if="!isNarrowTable"
-                  type="text"
+                  link
+                  type="primary"
                   size="small"
                   @click="handleEdit(row)"
                 >
@@ -695,7 +698,8 @@ onMounted(() => {
                 </el-button>
                 <el-button
                   v-if="!isCompactTable"
-                  type="text"
+                  link
+                  type="primary"
                   size="small"
                   @click="handleRole(row)"
                 >
@@ -707,7 +711,8 @@ onMounted(() => {
                   @command="handleMoreCommand($event, row)"
                 >
                   <el-button
-                    type="text"
+                    link
+                    type="primary"
                     size="small"
                     class="user-more-button"
                     :class="{ 'is-standalone': isNarrowTable }"
@@ -1063,7 +1068,8 @@ onMounted(() => {
             >
               <template #default="{ row }">
                 <el-button
-                  type="text"
+                  link
+                  type="primary"
                   size="small"
                   :loading="passkeyDeletingId === row.id"
                   @click="handleDeleteUserPasskey(row)"
@@ -1117,6 +1123,8 @@ onMounted(() => {
     }
 
     .user-name-button {
+      --el-button-hover-link-text-color: var(--el-color-primary);
+      --el-button-active-color: var(--el-color-primary);
       padding: 0;
       width: 100%;
       height: auto;
