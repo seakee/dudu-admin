@@ -412,14 +412,16 @@ watch(
           <TableActionColumn>
             <template #default="{ row }">
               <el-button
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="handleEdit(row)"
               >
                 {{ t('system.permission.action.edit') }}
               </el-button>
               <el-button
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="handleDelete(row)"
               >

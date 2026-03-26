@@ -568,21 +568,24 @@ onMounted(() => {
             <template #default="{ row }">
               <el-button
                 v-if="isTopLevelMenu(row)"
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="handleAdd(row)"
               >
                 {{ t('system.menu.action.createChild') }}
               </el-button>
               <el-button
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="handleEdit(row)"
               >
                 {{ t('system.menu.action.edit') }}
               </el-button>
               <el-button
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="handleDelete(row)"
               >
@@ -712,7 +715,7 @@ onMounted(() => {
             <div class="menu-icon-actions">
               <el-button
                 size="small"
-                text
+                link
                 @click="iconPickerVisible = false"
               >
                 {{ t('common.cancel') }}

@@ -384,7 +384,8 @@ onMounted(() => {
           <TableActionColumn :width="100">
             <template #default="{ row }">
               <el-button
-                type="text"
+                link
+                type="primary"
                 size="small"
                 @click="showDetail(row)"
               >
