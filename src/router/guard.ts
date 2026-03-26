@@ -1,5 +1,6 @@
 import router from './index'
-import { useAuthStore, usePermissionStore } from '@/stores'
+import { useAuthStore } from '@/stores'
+import { ensureDynamicRoutesReady, hasDynamicRoutes } from './bootstrap'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { i18n } from '@/i18n'
@@ -24,11 +25,13 @@ function isDynamicImportError(error: unknown): boolean {
 // 白名单路由
 const whiteList = ['/login', '/404', '/password/reset', '/auth/callback']
 
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to) => {
   NProgress.start()
 
   const authStore = useAuthStore()
-  const permissionStore = usePermissionStore()
+  const isBootstrapPlaceholder = to.matched.some((record) => {
+    return Boolean(record.meta?.bootstrapPlaceholder)
+  })
 
   // 设置页面标题
   const { t } = i18n.global
@@ -41,45 +44,35 @@ router.beforeEach(async (to, _from, next) => {
   // 已登录
   if (authStore.isLoggedIn) {
     if (to.path === '/login') {
-      next({ path: '/' })
-      NProgress.done()
-    } else {
-      // 检查是否已获取用户信息
-      if (authStore.userInfo) {
-        next()
-      } else {
-        try {
-          // 获取用户信息
-          await authStore.getProfile()
-
-          // 获取菜单并生成动态路由
-          await authStore.getMenus()
-
-          // 添加动态路由
-          const routesToAdd = permissionStore.generateRoutes(authStore.menus)
-          routesToAdd.forEach((route) => {
-            router.addRoute(route)
-          })
-
-          // 重新导航以确保路由正确加载
-          next({ ...to, replace: true })
-        } catch {
-          // 获取信息失败，清除 token 并跳转登录
-          authStore.resetAuth()
-          next(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
-          NProgress.done()
-        }
-      }
+      return { path: '/' }
     }
-  } else {
-    // 未登录
-    if (whiteList.includes(to.path)) {
-      next()
-    } else {
-      next(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+
+    try {
+      if (!hasDynamicRoutes()) {
+        await ensureDynamicRoutesReady()
+        return { ...to, replace: true }
+      }
+
+      if (isBootstrapPlaceholder) {
+        return { path: '/404', replace: true }
+      }
+
+      return true
+    } catch {
+      // 获取信息失败，清除 token 并跳转登录
+      authStore.resetAuth()
       NProgress.done()
+      return `/login?redirect=${encodeURIComponent(to.fullPath)}`
     }
   }
+
+  // 未登录
+  if (whiteList.includes(to.path)) {
+    return true
+  }
+
+  NProgress.done()
+  return `/login?redirect=${encodeURIComponent(to.fullPath)}`
 })
 
 router.afterEach((to) => {
