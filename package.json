@@ -6,19 +6,19 @@
   "scripts": {
     "init": "bash ./scripts/init-project.sh",
     "check:backend": "bash ./scripts/check-backend-linkage.sh",
+    "check:tokens": "node ./scripts/check-design-tokens.mjs",
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.3.2",
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@lucide/vue": "^1.78.0",
     "@vueuse/core": "^14.1.0",
     "axios": "^1.7.0",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.10",
-    "element-plus": "^2.9.0",
     "js-cookie": "^3.0.5",
     "nprogress": "^0.2.0",
     "pinia": "^2.2.0",

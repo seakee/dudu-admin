@@ -4,6 +4,7 @@ export default {
     name: 'Admin'
   },
   common: {
+    all: '全部',
     confirm: '确定',
     cancel: '取消',
     submit: '提交',
@@ -30,7 +31,20 @@ export default {
     placeholder: '请输入',
     selectPlaceholder: '请选择',
     loading: '加载中...',
-    view: '查看'
+    view: '查看',
+    more: '更多',
+    refresh: '刷新',
+    clearFilters: '清空筛选',
+    noData: '暂无数据',
+    noMatch: '未找到匹配结果',
+    noMatchDesc: '请尝试调整搜索关键词或清空筛选条件',
+    noDataDesc: '当前列表暂无记录，点击右上角操作新建或刷新重试',
+    unsavedChanges: '有未保存的修改',
+    allSaved: '当前配置已同步保存',
+    selectedCount: '已选择 {count} 项',
+    clearSelection: '取消选择',
+    clearAll: '清空全部',
+    expandMore: '展开剩余 {count} 条'
   },
   route: {
     login: '登录',
@@ -56,7 +70,9 @@ export default {
     light: '浅色',
     dark: '深色',
     auto: '跟随系统',
-    tooltip: '主题切换'
+    tooltip: '主题与外观',
+    visualEffects: '减弱透明与动效',
+    tagsView: '显示多页签栏'
   },
   localeSwitch: {
     tooltip: '语言切换',
@@ -155,10 +171,11 @@ export default {
   },
   profile: {
     title: '个人中心',
-    pageSubtitle: '统一管理个人资料、登录标识与高风险认证方式。',
+    tabProfile: '个人资料',
+    tabSecurity: '安全与凭证',
     overviewTitle: '账户概览',
-    overviewSubtitle: '当前账号的身份信息与安全摘要会集中展示在这里。',
-    sectionProfile: '个人资料',
+    overviewSubtitle: '当前账号的身份信息与安全状态。',
+    sectionProfile: '基本资料',
     sectionPassword: '修改密码',
     sectionAccount: '修改登录标识',
     sectionOAuth: '第三方账号',
@@ -174,11 +191,11 @@ export default {
     enterOldPasswordDesc: '请输入旧密码完成验证',
     enterPasswordDesc: '请输入密码完成验证',
     roleAdmin: '管理员',
-    securityTitle: '安全中心',
-    securitySubtitle: '安全设置与双因素认证',
-    securityStatusSafe: '安全',
+    securityTitle: '登录与安全验证',
+    securitySubtitle: '管理登录密码、本地登录标识及双因素认证保护。',
+    securityStatusSafe: '已保护',
     actionChange: '修改',
-    editorSubtitle: '更新展示名称与头像地址，提交前会先做基础校验。',
+    editorSubtitle: '更新展示名称与头像地址，修改后需点击保存生效。',
     tfaSetupTitle: '绑定认证应用',
     tfaSetupDesc: '使用认证器应用扫描二维码，或手动录入下方密钥完成绑定。',
     scanTip: '使用 Google Authenticator 或类似应用扫描',
@@ -243,6 +260,7 @@ export default {
       userNameRequired: '请输入用户名',
       userNameReserved: '用户名包含系统保留前后缀，请更换后再试',
       identifierRequired: '邮箱或手机号至少填写一项',
+      identifierUnchanged: '当前登录标识未发生变更',
       emailInvalid: '邮箱格式不正确',
       phoneInvalid: '手机号格式不正确'
     },
@@ -570,7 +588,7 @@ export default {
         parent: '上级菜单',
         noParent: '无父级',
         permission: '权限ID',
-        iconPlaceholder: 'Element Plus 图标名称',
+        iconPlaceholder: 'Lucide 图标名称',
         permissionPlaceholder: '选择权限'
       },
       detail: {
@@ -690,5 +708,18 @@ export default {
     forbidden: '拒绝访问',
     notFound: '请求资源不存在',
     serverError: '服务器内部错误'
+  },
+  pagination: {
+    totalRecords: '共 {total} 条记录',
+    rangeRecords: '显示第 {start}–{end} 条，共 {total} 条',
+    pageSize: '每页',
+    perPage: '{size} 条/页',
+    prev: '上一页',
+    next: '下一页',
+    jumpTo: '跳至',
+    pageUnit: '页'
+  },
+  footer: {
+    designedBy: 'Designed by'
   }
 }

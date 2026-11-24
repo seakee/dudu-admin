@@ -182,31 +182,23 @@ export const mockRoles: Role[] = [
 
 // 模拟权限数据
 export const mockPermissions: Permission[] = [
-    // 用户管理权限
-    { ID: 1, name: 'user:view', description: '查看用户', type: 'menu', group: '用户管理' },
-    { ID: 2, name: 'user:create', description: '创建用户', type: 'button', group: '用户管理' },
-    { ID: 3, name: 'user:update', description: '编辑用户', type: 'button', group: '用户管理' },
-    { ID: 4, name: 'user:delete', description: '删除用户', type: 'button', group: '用户管理' },
-    { ID: 5, name: 'user:role', description: '分配角色', type: 'button', group: '用户管理' },
-    { ID: 6, name: 'user:password', description: '重置密码', type: 'button', group: '用户管理' },
-    // 角色管理权限
-    { ID: 10, name: 'role:view', description: '查看角色', type: 'menu', group: '角色管理' },
-    { ID: 11, name: 'role:create', description: '创建角色', type: 'button', group: '角色管理' },
-    { ID: 12, name: 'role:update', description: '编辑角色', type: 'button', group: '角色管理' },
-    { ID: 13, name: 'role:delete', description: '删除角色', type: 'button', group: '角色管理' },
-    { ID: 14, name: 'role:permission', description: '分配权限', type: 'button', group: '角色管理' },
-    // 权限管理权限
-    { ID: 20, name: 'permission:view', description: '查看权限', type: 'menu', group: '权限管理' },
-    { ID: 21, name: 'permission:create', description: '创建权限', type: 'button', group: '权限管理' },
-    { ID: 22, name: 'permission:update', description: '编辑权限', type: 'button', group: '权限管理' },
-    { ID: 23, name: 'permission:delete', description: '删除权限', type: 'button', group: '权限管理' },
-    // 菜单管理权限
-    { ID: 30, name: 'menu:view', description: '查看菜单', type: 'menu', group: '菜单管理' },
-    { ID: 31, name: 'menu:create', description: '创建菜单', type: 'button', group: '菜单管理' },
-    { ID: 32, name: 'menu:update', description: '编辑菜单', type: 'button', group: '菜单管理' },
-    { ID: 33, name: 'menu:delete', description: '删除菜单', type: 'button', group: '菜单管理' },
-    // 操作记录权限
-    { ID: 40, name: 'operation:view', description: '查看操作记录', type: 'menu', group: '操作记录' }
+    // API 权限
+    { ID: 1, name: 'user:list', description: '获取用户分页列表', type: 'api', method: 'GET', path: '/dudu-admin-api/internal/admin/system/user/paginate', group: '用户管理' },
+    { ID: 2, name: 'user:create', description: '创建用户', type: 'api', method: 'POST', path: '/dudu-admin-api/internal/admin/system/user', group: '用户管理' },
+    { ID: 3, name: 'user:update', description: '编辑用户', type: 'api', method: 'PUT', path: '/dudu-admin-api/internal/admin/system/user', group: '用户管理' },
+    { ID: 4, name: 'user:delete', description: '删除用户', type: 'api', method: 'DELETE', path: '/dudu-admin-api/internal/admin/system/user', group: '用户管理' },
+    { ID: 5, name: 'role:list', description: '获取角色列表', type: 'api', method: 'GET', path: '/dudu-admin-api/internal/admin/system/role/paginate', group: '角色管理' },
+    { ID: 6, name: 'role:create', description: '创建角色', type: 'api', method: 'POST', path: '/dudu-admin-api/internal/admin/system/role', group: '角色管理' },
+    { ID: 7, name: 'role:update', description: '更新角色', type: 'api', method: 'PUT', path: '/dudu-admin-api/internal/admin/system/role', group: '角色管理' },
+    { ID: 8, name: 'role:delete', description: '删除角色', type: 'api', method: 'DELETE', path: '/dudu-admin-api/internal/admin/system/role', group: '角色管理' },
+    { ID: 9, name: 'permission:list', description: '获取权限列表', type: 'api', method: 'GET', path: '/dudu-admin-api/internal/admin/system/permission/paginate', group: '权限管理' },
+    { ID: 10, name: 'operation:list', description: '查询操作日志', type: 'api', method: 'GET', path: '/dudu-admin-api/internal/admin/system/record/paginate', group: '操作记录' },
+    // 菜单权限
+    { ID: 20, name: 'user:view', description: '查看用户管理菜单', type: 'menu', group: '用户管理' },
+    { ID: 21, name: 'role:view', description: '查看角色管理菜单', type: 'menu', group: '角色管理' },
+    { ID: 22, name: 'permission:view', description: '查看权限管理菜单', type: 'menu', group: '权限管理' },
+    { ID: 23, name: 'menu:view', description: '查看菜单管理菜单', type: 'menu', group: '菜单管理' },
+    { ID: 24, name: 'operation:view', description: '查看操作记录菜单', type: 'menu', group: '操作记录' }
 ]
 
 // 模拟菜单树数据（用于菜单管理页面）

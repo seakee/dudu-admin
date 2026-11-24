@@ -50,6 +50,8 @@ function buildRouteTitleKeyMap(
 }
 
 const routeTitleKeyMap = buildRouteTitleKeyMap([...constantRoutes, ...asyncRoutes])
+routeTitleKeyMap.set('/dashboard', 'route.dashboard')
+routeTitleKeyMap.set('/dashboard/index', 'route.dashboard')
 
 export function resolveRouteTitleKeyByPath(path?: string): string | undefined {
   if (!path) {

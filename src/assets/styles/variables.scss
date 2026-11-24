@@ -1,0 +1,35 @@
+/**
+ * SCSS 变量定义（零 CSS 产物，统一映射至 tokens.scss 中的 CSS Custom Properties）
+ */
+
+$primary-color: var(--primary-color);
+$success-color: var(--success-color);
+$warning-color: var(--warning-color);
+$error-color: var(--error-color);
+$info-color: var(--info-color);
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+$shadow-sm: var(--app-shadow-soft);
+$shadow-lg: var(--floating-shadow-lg);
+
+$transition-fast: 150ms ease;
+$transition-normal: 300ms ease;
+$transition-slow: 500ms ease;
+
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+$breakpoint-desktop: 1280px;
+
+$z-dropdown: 1000;
+$z-modal: 2000;
+$z-notification: 3000;
+
+$app-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+  'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+$font-mono: var(--font-mono);

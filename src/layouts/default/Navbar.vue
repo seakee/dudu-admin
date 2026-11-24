@@ -1,18 +1,50 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAppStore, useAuthStore } from '@/stores'
-import { ElMessageBox } from 'element-plus'
+import { confirmDialog } from '@/utils/confirm'
+import {
+  hasHeaderRefreshHandler,
+  isHeaderRefreshing,
+  triggerHeaderRefresh
+} from '@/composables/useHeaderRefresh'
 import ThemeSelect from '@/components/ThemeSelect/index.vue'
 import LocaleSelect from '@/components/LocaleSelect/index.vue'
 import Breadcrumb from '@/components/Breadcrumb/index.vue'
-import { useI18n } from 'vue-i18n'
+import type { DropdownItem } from '@/components/types'
 
 const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
+const userInitial = computed(() => authStore.userName.charAt(0).toUpperCase() || 'U')
+
+const userMenuItems = computed<DropdownItem[]>(() => [
+  {
+    key: 'profile',
+    label: t('navbar.profile'),
+    icon: 'User'
+  },
+  {
+    key: 'logout',
+    label: t('navbar.logout'),
+    icon: 'LogOut',
+    divided: true,
+    tone: 'danger'
+  }
+])
+
 function toggleSidebar() {
   appStore.toggleSidebar()
+}
+
+function handleHeaderRefresh() {
+  if (isHeaderRefreshing.value) {
+    return
+  }
+  void triggerHeaderRefresh()
 }
 
 async function handleCommand(command: string) {
@@ -22,7 +54,7 @@ async function handleCommand(command: string) {
       break
     case 'logout':
       try {
-        await ElMessageBox.confirm(t('navbar.logoutConfirm'), t('navbar.dialogTitle'), {
+        await confirmDialog(t('navbar.logoutConfirm'), t('navbar.dialogTitle'), {
           confirmButtonText: t('common.confirm'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
@@ -40,69 +72,88 @@ async function handleCommand(command: string) {
 <template>
   <div class="navbar">
     <div class="left-menu">
-      <div
+      <button
+        type="button"
         class="hamburger-container"
+        :aria-expanded="appStore.sidebar.opened"
+        aria-label="Toggle navigation"
         @click="toggleSidebar"
       >
-        <el-icon :size="20">
-          <Fold v-if="appStore.sidebar.opened" />
-          <Expand v-else />
-        </el-icon>
-      </div>
+        <AppIcon
+          :name="appStore.sidebar.opened ? 'PanelLeftClose' : 'PanelLeftOpen'"
+          :size="20"
+        />
+      </button>
       <Breadcrumb />
     </div>
 
     <div class="right-menu">
       <div class="nav-tools">
+        <AppTooltip
+          v-if="hasHeaderRefreshHandler"
+          :content="t('common.refresh')"
+          placement="bottom"
+        >
+          <button
+            type="button"
+            class="nav-icon-btn"
+            :aria-label="t('common.refresh')"
+            :disabled="isHeaderRefreshing"
+            @click="handleHeaderRefresh"
+          >
+            <AppIcon
+              name="RotateCw"
+              :size="18"
+              :spin="isHeaderRefreshing"
+            />
+          </button>
+        </AppTooltip>
         <ThemeSelect />
         <LocaleSelect icon-only />
       </div>
-      <el-dropdown
+
+      <AppDropdown
         class="avatar-container right-menu-item"
-        trigger="click"
-        @command="handleCommand"
+        :items="userMenuItems"
+        placement="bottom-end"
+        :aria-label="authStore.userName || t('navbar.profile')"
+        @select="handleCommand"
       >
-        <div class="avatar-wrapper">
-          <el-avatar
-            :size="30"
-            :src="authStore.avatar"
-            class="navbar-avatar"
-            :class="{ 'is-generated': !authStore.avatar }"
+        <template #trigger>
+          <button
+            type="button"
+            class="avatar-wrapper"
           >
-            {{ authStore.userName.charAt(0) }}
-          </el-avatar>
-          <span class="user-name">{{ authStore.userName }}</span>
-          <el-icon><CaretBottom /></el-icon>
-        </div>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item command="profile">
-              <el-icon><User /></el-icon>
-              {{ t('navbar.profile') }}
-            </el-dropdown-item>
-            <el-dropdown-item
-              divided
-              command="logout"
-            >
-              <el-icon><SwitchButton /></el-icon>
-              {{ t('navbar.logout') }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
+            <AppAvatar
+              :size="28"
+              :src="authStore.avatar"
+              :alt="authStore.userName"
+              :fallback="userInitial"
+              aria-hidden="true"
+              class="navbar-avatar"
+              :class="{ 'is-generated': !authStore.avatar }"
+            />
+            <span class="user-name">{{ authStore.userName }}</span>
+            <AppIcon
+              name="ChevronDown"
+              :size="12"
+              class="avatar-caret"
+            />
+          </button>
         </template>
-      </el-dropdown>
+      </AppDropdown>
     </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .navbar {
-  height: 50px;
-  overflow: hidden;
+  height: var(--navbar-height);
   background: var(--app-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow-soft);
+  backdrop-filter: var(--glass-backdrop-filter);
+  -webkit-backdrop-filter: var(--glass-backdrop-filter);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -110,16 +161,33 @@ async function handleCommand(command: string) {
   .left-menu {
     display: flex;
     align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
 
     .hamburger-container {
-      padding: 0 15px;
-      cursor: pointer;
-      transition: background 0.3s;
-      display: flex;
+      @include button-reset;
+      width: var(--navbar-height);
+      height: var(--navbar-height);
+      flex-shrink: 0;
+      display: inline-flex;
       align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition:
+        background-color $transition-fast,
+        color $transition-fast;
 
       &:hover {
         background: var(--app-accent-soft);
+        color: var(--primary-text);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--app-input-border-focus);
+        outline-offset: -2px;
+        background: var(--focus-bg);
+        color: var(--focus-text);
       }
     }
   }
@@ -127,102 +195,103 @@ async function handleCommand(command: string) {
   .right-menu {
     display: flex;
     align-items: center;
+    flex: 0 0 auto;
+    height: 100%;
+    gap: 6px;
     padding-right: 20px;
+
+    @include mobile {
+      padding-right: 12px;
+      gap: 4px;
+    }
 
     .nav-tools {
       display: flex;
       align-items: center;
       gap: 4px;
       height: 100%;
-      margin-right: 6px;
 
+      .nav-icon-btn,
       :deep(.theme-select-container),
-      :deep(.locale-select-container) {
-        padding: 0 6px;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        background: transparent;
-        border: 0;
-        box-shadow: none;
-        color: var(--app-text-regular);
-        transition: color 0.2s ease;
-      }
-
+      :deep(.locale-select-container),
       :deep(.locale-select-container.icon-only) {
-        padding: 0 6px;
-      }
+        @include button-reset;
+        width: var(--floating-control-size);
+        height: var(--floating-control-size);
+        min-width: var(--floating-control-size);
+        padding: 0;
+        border-radius: var(--app-radius-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        color: var(--text-secondary);
+        box-shadow: none;
+        transition:
+          background-color $transition-fast,
+          color $transition-fast;
 
-      :deep(.theme-select-container:hover),
-      :deep(.locale-select-container:hover) {
-        color: var(--el-color-primary);
-      }
-    }
-
-    .right-menu-item {
-      display: inline-block;
-      padding: 0 8px;
-      height: 100%;
-      font-size: 18px;
-      color: var(--app-text-regular);
-      vertical-align: text-bottom;
-
-      &.hover-effect {
-        cursor: pointer;
-        transition: background 0.3s;
-
-        &:hover {
+        &:hover:not(:disabled) {
           background: var(--app-accent-soft);
+          color: var(--primary-text);
         }
+      }
+
+      .nav-icon-btn:disabled {
+        cursor: progress;
+        opacity: 0.65;
       }
     }
 
     .avatar-container {
+      display: inline-flex;
+      align-items: center;
       cursor: pointer;
 
       .avatar-wrapper {
-        display: flex;
+        @include button-reset;
+        display: inline-flex;
         align-items: center;
         gap: 8px;
+        height: var(--floating-control-size);
+        padding: 0 8px;
+        border-radius: var(--app-radius-sm);
+        transition: background-color $transition-fast;
+
+        &:hover {
+          background: var(--app-accent-soft);
+        }
 
         .navbar-avatar {
-          transition: all 0.25s ease;
+          flex-shrink: 0;
 
           &.is-generated {
-            background: linear-gradient(145deg, #f2f8ff 0%, #deeeff 100%);
-            border: 1px solid rgba(10, 126, 220, 0.25);
-            color: #1d72d6;
+            background: var(--primary-subtle);
+            border: 1px solid var(--data-badge-info-border);
+            color: var(--primary-text);
             font-weight: 700;
-            box-shadow:
-              inset 0 0 0 1px rgba(255, 255, 255, 0.75),
-              0 4px 10px rgba(10, 126, 220, 0.18);
+            font-size: 13px;
+            box-shadow: none;
           }
         }
 
         .user-name {
-          font-size: 14px;
-          color: var(--el-text-color-primary);
-        }
-      }
+          font-size: 13.5px;
+          font-weight: 500;
+          color: var(--text-primary);
+          max-width: 120px;
+          @include text-ellipsis;
 
-      &:hover {
-        .navbar-avatar.is-generated {
-          box-shadow:
-            inset 0 0 0 1px rgba(255, 255, 255, 0.82),
-            0 6px 14px rgba(10, 126, 220, 0.24);
-          transform: translateY(-1px);
+          @include mobile {
+            display: none;
+          }
+        }
+
+        .avatar-caret {
+          color: var(--text-tertiary);
         }
       }
     }
   }
-}
-
-:global(html.dark) .navbar .right-menu .avatar-container .avatar-wrapper .navbar-avatar.is-generated {
-  background: linear-gradient(145deg, rgba(56, 130, 246, 0.42) 0%, rgba(30, 64, 175, 0.45) 100%);
-  border-color: rgba(114, 180, 255, 0.4);
-  color: #edf4ff;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 4px 12px rgba(14, 24, 55, 0.42);
 }
 </style>

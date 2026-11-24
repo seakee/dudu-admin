@@ -2,15 +2,17 @@
 import { reactive, ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { User, Lock, Key } from '@element-plus/icons-vue'
+import { notify } from '@/utils/notify'
+import type { FormInstance, FormRules } from '@/types/form'
 import CryptoJS from 'crypto-js'
 import { finishPasskeyLogin, getOAuthUrl, getPasskeyLoginOptions } from '@/api/auth'
 import { useI18n } from 'vue-i18n'
 import { isHandledHttpError } from '@/utils/httpError'
 import { getWebAuthnErrorI18nKey, isWebAuthnSupported, startPasskeyAuthentication } from '@/utils/webauthn'
-import ThemeSelect from '@/components/ThemeSelect/index.vue'
-import LocaleSelect from '@/components/LocaleSelect/index.vue'
+import AuthPageShell from '@/components/AuthPageShell/index.vue'
+import AppBrandMark from '@/components/AppBrandMark/index.vue'
+import OAuthProviderIcon from '@/components/OAuthProviderIcon/index.vue'
+import type { KnownOAuthProvider } from '@/utils/oauthProvider'
 
 const OAUTH_STATE_MAP_KEY = 'admin-oauth-state-map'
 
@@ -39,7 +41,8 @@ const rules = computed<FormRules>(() => ({
     { required: true, message: t('login.validation.codeRequired'), trigger: 'blur' },
     {
       validator: (_rule, value, callback) => {
-        if (!/^\d{6}$/.test(value || '')) {
+        const code = typeof value === 'string' ? value : ''
+        if (!/^\d{6}$/.test(code)) {
           callback(new Error(t('login.validation.codeInvalid')))
         } else {
           callback()
@@ -115,9 +118,10 @@ async function handleLogin() {
       throw new Error(msg || t('login.error.failed'))
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (!isHandledHttpError(error)) {
-      ElMessage.error(error.message || t('login.error.failed'))
+      const message = error instanceof Error ? error.message : ''
+      notify.error(message || t('login.error.failed'))
     }
     console.error('Login failed:', error)
   } finally {
@@ -137,7 +141,7 @@ async function handlePasskeyLogin() {
   }
 
   if (!passkeySupported.value) {
-    ElMessage.warning(t('passkey.unsupported'))
+    notify.warning(t('passkey.unsupported'))
     return
   }
 
@@ -162,9 +166,9 @@ async function handlePasskeyLogin() {
 
     const redirect = route.query.redirect as string | undefined
     router.push(safeDecodeRedirect(redirect))
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (!isHandledHttpError(error)) {
-      ElMessage.error(t(getWebAuthnErrorI18nKey(error)))
+      notify.error(t(getWebAuthnErrorI18nKey(error)))
     }
     console.error('Passkey login failed:', error)
   } finally {
@@ -172,7 +176,7 @@ async function handlePasskeyLogin() {
   }
 }
 
-async function handleOAuth(platform: 'feishu' | 'wechat') {
+async function handleOAuth(platform: KnownOAuthProvider) {
   let login_type = ''
   if (platform === 'wechat' && isDesktopBrowser()) {
     login_type = 'qrcode'
@@ -247,7 +251,7 @@ function safeDecodeRedirect(redirect?: string): string {
   }
 }
 
-function cacheOAuthState(oauthUrl: string, platform: 'feishu' | 'wechat') {
+function cacheOAuthState(oauthUrl: string, platform: KnownOAuthProvider) {
   try {
     const state = new URL(oauthUrl).searchParams.get('state')
     if (!state) return
@@ -263,366 +267,202 @@ function cacheOAuthState(oauthUrl: string, platform: 'feishu' | 'wechat') {
 </script>
 
 <template>
-  <div class="login-wrapper">
-    <div class="login-tools">
-      <ThemeSelect class="login-tool" />
-      <LocaleSelect
-        class="login-tool"
-        icon-only
-      />
-    </div>
-    <div class="login-content">
-      <!-- Login Form Card -->
-      <div class="login-form-container">
-        <PageCard class="login-card">
-          <!-- Branding now inside the card -->
-          <div class="card-branding">
-            <div class="logo-icon">
-              D
-            </div>
-            <h1>Dudu Admin</h1>
-            <p class="slogan">
-              {{ t('login.slogan') }}
-            </p>
-          </div>
+  <AuthPageShell>
+    <AppBrandMark
+      class="login-brand"
+      :subtitle="t('login.slogan')"
+    />
 
-          <el-form
-            ref="loginFormRef"
-            :model="loginForm"
-            :rules="rules"
-            class="login-form"
-            size="large"
-            @keyup.enter="handleLogin"
-          >
-            <template v-if="!showTotp">
-              <el-form-item prop="identifier">
-                <el-input
-                  v-model="loginForm.identifier"
-                  :placeholder="t('login.identifierPlaceholder')"
-                  :prefix-icon="User"
-                />
-              </el-form-item>
+    <AppForm
+      ref="loginFormRef"
+      :model="loginForm"
+      :rules="rules"
+      class="login-form"
+      @keyup.enter="handleLogin"
+    >
+      <template v-if="!showTotp">
+        <AppFormItem prop="identifier">
+          <AppInput
+            v-model="loginForm.identifier"
+            size="lg"
+            :placeholder="t('login.identifierPlaceholder')"
+            prefix-icon="User"
+          />
+        </AppFormItem>
 
-              <el-form-item prop="password">
-                <el-input
-                  v-model="loginForm.password"
-                  type="password"
-                  :placeholder="t('login.passwordPlaceholder')"
-                  :prefix-icon="Lock"
-                  show-password
-                />
-              </el-form-item>
-            </template>
+        <AppFormItem prop="password">
+          <AppInput
+            v-model="loginForm.password"
+            size="lg"
+            type="password"
+            :placeholder="t('login.passwordPlaceholder')"
+            prefix-icon="Lock"
+            show-password
+          />
+        </AppFormItem>
+      </template>
 
-            <template v-else>
-              <el-form-item
-                prop="totpCode"
-                class="totp-form-item"
-              >
-                <OtpCodeInput
-                  v-model="loginForm.totpCode"
-                  :length="6"
-                  @complete="handleOtpComplete"
-                />
-              </el-form-item>
-            </template>
+      <template v-else>
+        <AppFormItem
+          prop="totpCode"
+          class="totp-form-item"
+        >
+          <OtpCodeInput
+            v-model="loginForm.totpCode"
+            :length="6"
+            @complete="handleOtpComplete"
+          />
+        </AppFormItem>
+      </template>
 
-            <div class="form-options">
-              <!-- Future: Remember me / Forgot password -->
-            </div>
-
-            <el-button
-              type="primary"
-              :loading="loading"
-              :disabled="!canSubmit"
-              class="submit-btn"
-              @click="handleLogin"
-            >
-              {{ showTotp ? t('login.submitTotp') : t('login.submit') }}
-            </el-button>
-
-            <template v-if="!showTotp">
-              <el-button
-                class="passkey-btn"
-                :disabled="!canUsePasskey"
-                :loading="loading"
-                @click="handlePasskeyLogin"
-              >
-                <el-icon><Key /></el-icon>
-                <span>{{ t('passkey.startLogin') }}</span>
-              </el-button>
-            </template>
-          </el-form>
-
-          <div class="divider">
-            <span>{{ t('login.otherLogin') }}</span>
-          </div>
-
-          <div class="oauth-group">
-            <div
-              class="oauth-btn"
-              :title="t('login.oauthFeishu')"
-              @click="handleOAuth('feishu')"
-            >
-              <i class="iconfont dudu-feishu oauth-icon" />
-            </div>
-            <div
-              class="oauth-btn"
-              :title="t('login.oauthWechat')"
-              @click="handleOAuth('wechat')"
-            >
-              <i class="iconfont dudu-icon-qiyeweixin oauth-icon" />
-            </div>
-          </div>
-        </PageCard>
+      <div class="form-options">
+        <!-- Future: Remember me / Forgot password -->
       </div>
+
+      <AppButton
+        variant="primary"
+        size="lg"
+        block
+        :loading="loading"
+        :disabled="!canSubmit"
+        class="submit-btn"
+        @click="handleLogin"
+      >
+        {{ showTotp ? t('login.submitTotp') : t('login.submit') }}
+      </AppButton>
+
+      <template v-if="!showTotp">
+        <AppButton
+          variant="secondary"
+          size="lg"
+          block
+          icon="Key"
+          class="passkey-btn"
+          :disabled="!canUsePasskey"
+          :loading="loading"
+          @click="handlePasskeyLogin"
+        >
+          {{ t('passkey.startLogin') }}
+        </AppButton>
+      </template>
+    </AppForm>
+
+    <div class="divider">
+      <span>{{ t('login.otherLogin') }}</span>
     </div>
-  </div>
+
+    <div class="oauth-group">
+      <button
+        type="button"
+        class="oauth-btn"
+        :title="t('login.oauthFeishu')"
+        :aria-label="t('login.oauthFeishu')"
+        @click="handleOAuth('feishu')"
+      >
+        <OAuthProviderIcon
+          provider="feishu"
+          :size="20"
+        />
+      </button>
+      <button
+        type="button"
+        class="oauth-btn"
+        :title="t('login.oauthWechat')"
+        :aria-label="t('login.oauthWechat')"
+        @click="handleOAuth('wechat')"
+      >
+        <OAuthProviderIcon
+          provider="wechat"
+          :size="20"
+        />
+      </button>
+    </div>
+  </AuthPageShell>
 </template>
 
 <style lang="scss" scoped>
-.login-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  width: 100%;
-  overflow: hidden;
-  position: relative;
-}
-
-.login-tools {
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 20;
-
-  :deep(.theme-select-container),
-  :deep(.locale-select-container) {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--app-surface-muted);
-    border: 1px solid var(--glass-border);
-    color: var(--app-text-regular);
-    transition: all 0.3s;
-    box-shadow: var(--app-shadow-soft);
-  }
-
-  :deep(.theme-select-container:hover),
-  :deep(.locale-select-container:hover) {
-    background: var(--app-surface-strong);
-    color: var(--el-color-primary);
-    transform: translateY(-2px);
-  }
-}
-
-@media (max-width: 640px) {
-  .login-tools {
-    top: 16px;
-    right: 16px;
-
-    :deep(.theme-select-container),
-    :deep(.locale-select-container) {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-    }
-  }
-}
-
-.login-content {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding: 0 20px;
-  position: relative;
-  z-index: 10; // Above bg
-}
-
-.login-form-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-
-.login-card {
-  width: 100%;
-  max-width: 440px;
-  animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  text-align: center;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-.login-card :deep(.el-card__body) {
-  padding: 40px 35px;
-}
-
-.card-branding {
-  margin-bottom: 30px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  .logo-icon {
-    width: 64px;
-    height: 64px;
-    // Gradient Icon Background
-    background: var(--primary-gradient);
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    font-weight: 800;
-    margin-bottom: 16px;
-    color: #fff;
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.35);
-  }
-
-  h1 {
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    margin: 0 0 8px;
-    color: var(--app-text-primary);
-  }
-  
-  .slogan {
-    font-size: 14px;
-    color: var(--app-text-regular);
-    margin: 0;
-    font-weight: 500;
-  }
-}
-
-.header {
-  margin-bottom: 30px;
-
-  .title {
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--app-text-primary);
-    margin-bottom: 8px;
-  }
-
-  .subtitle {
-    color: var(--app-text-muted);
-    font-size: 14px;
-  }
+.login-brand {
+  margin-bottom: 28px;
 }
 
 .login-form {
   text-align: left;
 
-  :deep(.el-input__wrapper) {
-    padding: 10px 15px;
-    // Lighter inputs for glass card
-    background-color: var(--app-surface-muted);
-    box-shadow: none;
-    border: 1px solid var(--app-border);
-    border-radius: 10px;
-    transition: all 0.3s;
-    
-    &:hover {
-        background-color: var(--app-surface-strong);
-    }
-
-    &.is-focus {
-      background-color: var(--app-surface-strong);
-      box-shadow: 0 0 0 2px var(--el-color-primary) inset !important;
-    }
+  :deep(.app-input__inner) {
+    font-size: 14px;
   }
-  
+
   .form-options {
-    margin: 10px 0 20px;
+    margin: 8px 0 16px;
   }
 
   .submit-btn {
     width: 100%;
-    height: 50px;
-    font-size: 16px;
+    height: 44px;
+    font-size: 15px;
     font-weight: 600;
-    border-radius: 10px;
-    letter-spacing: 1px;
-    margin-top: 15px;
-    background: var(--primary-gradient);
-    border: none;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
-    }
-    
-    &:active {
-      transform: translateY(0);
-    }
+    border-radius: var(--app-radius-sm);
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+    box-shadow: none;
   }
 
   .passkey-btn {
     width: 100%;
-    height: 50px;
-    margin-top: 14px;
+    height: 44px;
+    margin-top: 12px;
     margin-left: 0;
-    border-radius: 10px;
-    border: 1px solid var(--el-color-primary-light-7);
-    background: linear-gradient(180deg, var(--app-surface-strong) 0%, var(--app-surface-muted) 100%);
-    color: var(--el-color-primary);
+    border-radius: var(--app-radius-sm);
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    box-shadow: 0 4px 14px rgba(64, 158, 255, 0.08);
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+    box-shadow: none;
 
-    &:hover:not(.is-disabled) {
-      background: var(--app-surface-strong);
-      color: var(--el-color-primary);
-      border-color: var(--el-color-primary-light-5);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(64, 158, 255, 0.12);
-    }
+    &:not(:disabled) {
+      border: 1px solid var(--data-badge-info-border);
+      background: var(--surface-subtle);
+      color: var(--primary-text);
 
-    &:active:not(.is-disabled) {
-      transform: translateY(0);
-      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+      &:hover {
+        background: var(--app-accent-soft);
+        border-color: var(--border-hover);
+        color: var(--primary-text);
+      }
+
+      &:active {
+        background: var(--app-accent-soft);
+        border-color: var(--primary-color);
+        color: var(--primary-text);
+      }
     }
 
     &:disabled {
+      border: 1px solid var(--border-subtle);
+      background: var(--surface-subtle);
+      color: var(--text-tertiary);
       box-shadow: none;
     }
 
-    :deep(.el-icon) {
+    :deep(.app-icon) {
       font-size: 16px;
     }
   }
 
   .totp-form-item {
-    :deep(.el-form-item__content) {
+    :deep(.app-form-item__content) {
       justify-content: center;
     }
   }
 }
 
 .divider {
-  margin: 35px 0 25px;
+  margin: 28px 0 20px;
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--app-text-muted);
+  color: var(--text-tertiary);
   font-size: 12px;
 
   &::before,
@@ -630,7 +470,7 @@ function cacheOAuthState(oauthUrl: string, platform: 'feishu' | 'wechat') {
     content: '';
     flex: 1;
     height: 1px;
-    background: var(--app-border);
+    background: var(--border-color);
   }
 
   span {
@@ -642,49 +482,30 @@ function cacheOAuthState(oauthUrl: string, platform: 'feishu' | 'wechat') {
 .oauth-group {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  
+  gap: 16px;
+
   .oauth-btn {
-    width: 46px;
-    height: 46px;
-    border-radius: 12px;
-    border: none;
-    background-color: transparent;
+    @include button-reset;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--app-radius-md);
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-subtle);
     box-shadow: none;
-    outline: none;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    color: var(--app-text-regular);
-    
+    color: var(--text-secondary);
+    transition:
+      background-color $transition-fast,
+      border-color $transition-fast,
+      color $transition-fast;
+
     &:hover {
-      color: var(--el-color-primary);
-      transform: translateY(-2px);
+      background-color: var(--app-accent-soft);
+      border-color: var(--border-hover);
+      color: var(--primary-text);
     }
-
-    &:hover .oauth-icon {
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.18));
-    }
-  }
-
-  .oauth-icon {
-    font-size: 28px;
-    line-height: 1;
-    transition: filter 0.3s;
-  }
-}
-
-// Animations
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 40px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 </style>

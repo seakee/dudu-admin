@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, watch, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTagsViewStore } from '@/stores'
 import type { RouteLocationNormalized } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { resolveRouteTitleKeyByPath } from '@/router/routeTitleKey'
 
 const route = useRoute()
 const router = useRouter()
 const tagsViewStore = useTagsViewStore()
 const { t } = useI18n()
 
+const scrollWrapperRef = ref<HTMLElement | null>(null)
 const visitedViews = computed(() => tagsViewStore.visitedViews)
 
 const isActive = (view: { path: string }) => {
@@ -67,12 +69,18 @@ function toLastView() {
   }
 }
 
-function handleScroll() {
-  // 滚动逻辑
+function handleWheel(event: WheelEvent) {
+  const container = scrollWrapperRef.value
+  if (!container) return
+  const delta = event.deltaY !== 0 ? event.deltaY : event.deltaX
+  if (delta !== 0) {
+    container.scrollLeft += delta
+  }
 }
 
-function getTagTitle(tag: { title: string; titleKey?: string }) {
-  return tag.titleKey ? t(tag.titleKey) : tag.title
+function getTagTitle(tag: { path: string; title: string; titleKey?: string }) {
+  const key = tag.titleKey || resolveRouteTitleKeyByPath(tag.path)
+  return key ? t(key) : tag.title
 }
 
 watch(route, () => {
@@ -88,116 +96,155 @@ onMounted(() => {
 
 <template>
   <div class="tags-view-container">
-    <el-scrollbar
+    <div
+      ref="scrollWrapperRef"
       class="tags-view-wrapper"
-      @scroll="handleScroll"
+      @wheel.prevent="handleWheel"
     >
-      <router-link
-        v-for="tag in visitedViews"
-        :key="tag.path"
-        :to="tag.path"
-        :class="['tags-view-item', { active: isActive(tag) }]"
-        @click.middle="!isAffix(tag) && closeSelectedTag(tag)"
-      >
-        {{ getTagTitle(tag) }}
-        <el-icon
-          v-if="!isAffix(tag)"
-          class="close-icon"
-          @click.prevent.stop="closeSelectedTag(tag)"
+      <div class="tags-view-track">
+        <div
+          v-for="tag in visitedViews"
+          :key="tag.path"
+          :class="['tags-view-item', { active: isActive(tag) }]"
+          @click.middle="!isAffix(tag) && closeSelectedTag(tag)"
         >
-          <Close />
-        </el-icon>
-      </router-link>
-    </el-scrollbar>
+          <router-link
+            :to="tag.path"
+            class="tags-view-item__link"
+          >
+            {{ getTagTitle(tag) }}
+          </router-link>
+          <button
+            v-if="!isAffix(tag)"
+            type="button"
+            class="close-icon"
+            :aria-label="t('common.close')"
+            @click.stop="closeSelectedTag(tag)"
+          >
+            <AppIcon
+              name="X"
+              :size="11"
+            />
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .tags-view-container {
-  height: 50px;
+  height: var(--tags-view-height);
   width: 100%;
-  background: var(--app-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow-soft);
+  background: color-mix(in srgb, var(--app-surface) 88%, transparent);
+  backdrop-filter: var(--glass-backdrop-filter);
+  -webkit-backdrop-filter: var(--glass-backdrop-filter);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: none;
 
   .tags-view-wrapper {
     white-space: nowrap;
     position: relative;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
     width: 100%;
+    height: 100%;
 
-    :deep(.el-scrollbar__view) {
-      display: flex;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tags-view-track {
+      display: inline-flex;
       align-items: center;
+      gap: 6px;
+      min-width: 100%;
       height: 100%;
+      padding: 0 12px;
     }
 
     .tags-view-item {
       display: inline-flex;
       align-items: center;
-      height: 32px;
-      line-height: 32px;
-      padding: 0 12px;
-      margin: 8px 0 8px 8px;
-      border: 1px solid var(--app-border);
-      color: var(--app-text-regular);
-      background: var(--app-surface-muted);
-      font-size: 13px;
-      cursor: pointer;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: all 0.3s;
+      gap: 6px;
+      height: 26px;
+      line-height: 1;
+      padding: 0 10px;
+      border-radius: var(--app-radius-xs);
+      border: 1px solid var(--border-subtle);
+      background: var(--surface-subtle);
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      user-select: none;
+      transition:
+        background-color $transition-fast,
+        border-color $transition-fast,
+        color $transition-fast;
 
-      &:hover {
-        background: var(--app-accent-soft);
-        color: var(--app-text-primary);
+      &:hover:not(.active) {
+        background: var(--surface-subtle-hover);
+        border-color: var(--border-hover);
+        color: var(--text-primary);
       }
 
-      &:first-of-type {
-        margin-left: 10px;
-      }
-
-      &:last-of-type {
-        margin-right: 10px;
+      &:has(.tags-view-item__link:focus-visible) {
+        outline: 2px solid var(--app-input-border-focus);
+        outline-offset: 1px;
       }
 
       &.active {
-        background: var(--primary-gradient);
-        color: #fff;
-        border-color: transparent;
-
-        html.dark & {
-          background: var(--el-color-primary-light-3);
-          border-color: var(--el-color-primary-light-3);
-        }
+        background: var(--primary-subtle);
+        border-color: var(--data-badge-info-border);
+        color: var(--primary-text);
+        font-weight: 600;
 
         &::before {
           content: '';
           display: inline-block;
-          width: 8px;
-          height: 8px;
-          margin-right: 4px;
-          background: #fff;
+          width: 6px;
+          height: 6px;
+          background: var(--primary-color);
           border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .close-icon {
+          color: var(--primary-text);
+        }
+      }
+
+      .tags-view-item__link {
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
+        color: inherit;
+        text-decoration: none;
+
+        &:focus {
+          outline: none;
         }
       }
 
       .close-icon {
-        width: 16px;
-        height: 16px;
-        margin-left: 4px;
+        @include button-reset;
+        width: 14px;
+        height: 14px;
+        margin-left: 2px;
         border-radius: 50%;
-        text-align: center;
-        transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-        display: flex;
+        color: var(--text-tertiary);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        transition:
+          background-color $transition-fast,
+          color $transition-fast;
 
         &:hover {
-          background-color: rgba(102, 126, 234, 0.2);
-          color: #fff;
+          background-color: var(--app-accent-soft);
+          color: var(--primary-text);
         }
       }
     }

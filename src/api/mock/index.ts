@@ -781,6 +781,10 @@ export function useMockAdapter(service: AxiosInstance) {
                     String(u.phone || '').toLowerCase().includes(phone)
                 );
             }
+            if (params?.status !== undefined && params?.status !== null && params?.status !== '') {
+                const targetStatus = Number(params.status);
+                filteredList = filteredList.filter(u => u.status === targetStatus);
+            }
             return createResponse({
                 list: filteredList,
                 total: filteredList.length,
@@ -1042,6 +1046,25 @@ export function useMockAdapter(service: AxiosInstance) {
             const permissionIds = mockRolePermissions[roleId] || [];
             return createResponse(permissionIds);
         }
+        // 获取角色菜单权限树
+        if (url === '/dudu-admin-api/internal/admin/system/role/permission/menu-tree' && method === 'get') {
+            const roleId = Number(params?.role_id || 1);
+            const permSet = new Set(mockRolePermissions[roleId] || []);
+            const buildTreeNodes = (menus: typeof mockMenuTree): Array<Record<string, unknown>> =>
+                menus.map((menu) => ({
+                    id: menu.ID,
+                    name: menu.name,
+                    path: menu.path,
+                    permission_id: menu.permission_id || 0,
+                    parent_id: menu.parent_id,
+                    icon: menu.icon,
+                    sort: menu.sort,
+                    checked: Boolean(menu.permission_id && permSet.has(menu.permission_id)),
+                    children: menu.children ? buildTreeNodes(menu.children) : []
+                }));
+            return createResponse({ items: buildTreeNodes(mockMenuTree) });
+        }
+
 
         // 设置角色权限
         if (url === '/dudu-admin-api/internal/admin/system/role/permission' && method === 'put') {
@@ -1059,12 +1082,14 @@ export function useMockAdapter(service: AxiosInstance) {
             const name = params?.name?.toLowerCase() || '';
             const type = params?.type || '';
             const group = params?.group || '';
+            const reqMethod = params?.method?.toUpperCase() || '';
 
             let filteredList = mockPermissions;
             if (name) {
                 filteredList = filteredList.filter(p =>
                     p.name.toLowerCase().includes(name) ||
-                    p.description?.toLowerCase().includes(name)
+                    p.description?.toLowerCase().includes(name) ||
+                    p.path?.toLowerCase().includes(name)
                 );
             }
             if (type) {
@@ -1072,6 +1097,9 @@ export function useMockAdapter(service: AxiosInstance) {
             }
             if (group) {
                 filteredList = filteredList.filter(p => p.group === group);
+            }
+            if (reqMethod) {
+                filteredList = filteredList.filter(p => p.method?.toUpperCase() === reqMethod);
             }
 
             return createResponse({
@@ -1217,6 +1245,7 @@ export function useMockAdapter(service: AxiosInstance) {
                     path: buildApiPath('/internal/admin/auth/profile'),
                     status: 200,
                     ip: '127.0.0.1',
+                    trace_id: 'tr-9a8f12c40e1b',
                     location: '本地',
                     duration: 15,
                     created_at: '2026-01-27 10:00:00',
@@ -1230,6 +1259,7 @@ export function useMockAdapter(service: AxiosInstance) {
                     path: buildApiPath('/internal/admin/auth/token'),
                     status: 200,
                     ip: '127.0.0.1',
+                    trace_id: 'tr-7c31d05e88a2',
                     location: '本地',
                     duration: 32,
                     created_at: '2026-01-27 09:58:00',
@@ -1243,6 +1273,7 @@ export function useMockAdapter(service: AxiosInstance) {
                     path: buildApiPath('/internal/admin/system/user'),
                     status: 200,
                     ip: '192.168.1.100',
+                    trace_id: 'tr-5b20a94c31f9',
                     location: '内网',
                     duration: 45,
                     created_at: '2026-01-27 09:30:00',
@@ -1256,6 +1287,7 @@ export function useMockAdapter(service: AxiosInstance) {
                     path: buildApiPath('/internal/admin/system/role'),
                     status: 403,
                     ip: '10.0.0.1',
+                    trace_id: 'tr-2e84b71d60c3',
                     location: '内网',
                     duration: 8,
                     created_at: '2026-01-26 16:00:00',

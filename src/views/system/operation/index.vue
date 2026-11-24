@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { HTTP_METHOD_OPTIONS, getHttpMethodTone } from '@/utils/httpMethod'
+import { notify } from '@/utils/notify'
 import { getOperationList, getOperationDetail } from '@/api/operation'
 import type { OperationDetailRaw, OperationListParams, OperationLogRaw } from '@/api/operation'
 import { formatDateTime } from '@/utils/datetime'
 import { useI18n } from 'vue-i18n'
-import { useFormLabelWidth } from '@/composables/useFormLabelWidth'
+import { useHeaderRefresh } from '@/composables/useHeaderRefresh'
+import CodePayloadCard from '@/components/CodePayloadCard/index.vue'
+import type { TableActionItem } from '@/components/types'
 
 interface OperationLog {
   id: string
@@ -34,9 +37,10 @@ const detailVisible = ref(false)
 const detailLoading = ref(false)
 const detailData = ref<OperationDetailData | null>(null)
 const { t } = useI18n()
-const searchLabelWidth = useFormLabelWidth('88px', '110px')
 
-const queryParams = reactive<OperationListParams>({
+const methodOptions = HTTP_METHOD_OPTIONS
+
+const queryParams = reactive<OperationListParams & Required<Pick<OperationListParams, 'page' | 'size'>>>({
   page: 1,
   size: 10,
   path: '',
@@ -46,6 +50,11 @@ const queryParams = reactive<OperationListParams>({
   method: '',
   trace_id: ''
 })
+
+const hasActiveFilters = computed(() => Boolean(
+  queryParams.path || queryParams.user_id != null || queryParams.ip ||
+  queryParams.status != null || queryParams.method || queryParams.trace_id
+))
 
 function toStringValue(...values: Array<string | number | null | undefined>): string {
   for (const value of values) {
@@ -81,16 +90,16 @@ function toOptionalInteger(value: string | number | null | undefined, minimum: n
   return numberValue
 }
 
-const userIdText = computed<string>({
+const userIdText = computed({
   get: () => (queryParams.user_id === undefined ? '' : String(queryParams.user_id)),
-  set: (value) => {
+  set: (value: string | number | undefined) => {
     queryParams.user_id = toOptionalInteger(value, 1)
   }
 })
 
-const statusText = computed<string>({
+const statusText = computed({
   get: () => (queryParams.status === undefined ? '' : String(queryParams.status)),
-  set: (value) => {
+  set: (value: string | number | undefined) => {
     queryParams.status = toOptionalInteger(value, 0)
   }
 })
@@ -160,26 +169,6 @@ async function showDetail(row: OperationLog) {
   }
 }
 
-function formatJson(value: unknown): string {
-  if (value === undefined || value === null || value === '') {
-    return ''
-  }
-
-  if (typeof value === 'string') {
-    try {
-      return JSON.stringify(JSON.parse(value), null, 2)
-    } catch {
-      return value
-    }
-  }
-
-  try {
-    return JSON.stringify(value, null, 2)
-  } catch {
-    return String(value)
-  }
-}
-
 function formatLatency(seconds: number): string {
   if (!Number.isFinite(seconds)) {
     return '-'
@@ -192,35 +181,45 @@ function formatLatency(seconds: number): string {
 
 async function handleCopy(content: string, successMessageKey: string) {
   if (!content) {
-    ElMessage.error(t('system.operation.message.copyFailed'))
+    notify.error(t('system.operation.message.copyFailed'))
     return
   }
 
   try {
     await navigator.clipboard.writeText(content)
-    ElMessage.success(t(successMessageKey))
+    notify.success(t(successMessageKey))
   } catch {
-    ElMessage.error(t('system.operation.message.copyFailed'))
+    notify.error(t('system.operation.message.copyFailed'))
   }
 }
 
-function getMethodTagType(method: string): 'success' | 'primary' | 'warning' | 'danger' | 'info' {
-  const types: Record<string, 'success' | 'primary' | 'warning' | 'danger' | 'info'> = {
-    GET: 'success',
-    POST: 'primary',
-    PUT: 'warning',
-    DELETE: 'danger'
+function getOperatorSecondary(row: OperationLog): string {
+  if (!row.user_name && !row.ip) {
+    return ''
   }
-  return types[method.toUpperCase()] || 'info'
+  return row.ip || '-'
 }
 
-function getStatusTagType(status: number): 'success' | 'warning' | 'danger' | 'info' {
-  if (status === 0) return 'success'
-  if (status >= 200 && status < 300) return 'success'
-  if (status >= 10000 || status >= 500) return 'danger'
+function getStatusTone(status: number) {
+  if (status >= 500) return 'danger'
   if (status >= 400) return 'warning'
-  return 'info'
+  if (status >= 300) return 'info'
+  if (status >= 200) return 'success'
+  return 'neutral'
 }
+
+function getOperationActions(row: OperationLog): TableActionItem[] {
+  return [
+    {
+      key: 'detail',
+      label: t('system.operation.action.detail'),
+      icon: 'Eye',
+      onClick: () => showDetail(row)
+    }
+  ]
+}
+
+useHeaderRefresh(() => fetchData())
 
 onMounted(() => {
   fetchData()
@@ -228,529 +227,468 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="operation-container">
-    <PageSearchSection
-      :model="queryParams"
-      :label-width="searchLabelWidth"
-      @submit="handleSearch"
-    >
-      <el-form-item :label="t('system.operation.table.traceId')">
-        <el-input
-          v-model="queryParams.trace_id"
-          :placeholder="t('system.operation.table.traceId')"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item :label="t('system.operation.search.path')">
-        <el-input
-          v-model="queryParams.path"
-          :placeholder="t('system.operation.search.path')"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item :label="t('system.operation.search.userId')">
-        <el-input
-          v-model="userIdText"
-          type="number"
-          :min="1"
-          :placeholder="t('system.operation.search.userId')"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item :label="t('system.operation.search.ip')">
-        <el-input
-          v-model="queryParams.ip"
-          :placeholder="t('system.operation.search.ip')"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item :label="t('system.operation.search.method')">
-        <el-select
-          v-model="queryParams.method"
-          :placeholder="t('common.selectPlaceholder')"
-          clearable
-        >
-          <el-option
-            label="GET"
-            value="GET"
-          />
-          <el-option
-            label="POST"
-            value="POST"
-          />
-          <el-option
-            label="PUT"
-            value="PUT"
-          />
-          <el-option
-            label="DELETE"
-            value="DELETE"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="t('system.operation.search.status')">
-        <el-input
-          v-model="statusText"
-          type="number"
-          :min="0"
-          :placeholder="t('system.operation.search.status')"
-          clearable
-        />
-      </el-form-item>
+  <div>
+    <div class="page-workspace">
+      <PageControlBar>
+        <template #toolbar>
+          <PageFilterBar
+            control-width="136px"
+            search-variant="primary"
+            @search="handleSearch"
+            @reset="handleReset"
+          >
+            <AppInput
+              v-model="queryParams.trace_id"
+              size="sm"
+              :suffix-icon="queryParams.trace_id ? undefined : 'Search'"
+              :aria-label="t('system.operation.table.traceId')"
+              :placeholder="t('system.operation.table.traceId')"
+              clearable
+              @enter="handleSearch"
+            />
+            <AppInput
+              v-model="queryParams.path"
+              size="sm"
+              :aria-label="t('system.operation.search.path')"
+              :placeholder="t('system.operation.search.path')"
+              clearable
+              @enter="handleSearch"
+            />
+            <AppInput
+              v-model="userIdText"
+              size="sm"
+              :aria-label="t('system.operation.search.userId')"
+              :placeholder="t('system.operation.search.userId')"
+              type="number"
+              :min="1"
+              clearable
+              @enter="handleSearch"
+            />
+            <AppInput
+              v-model="queryParams.ip"
+              size="sm"
+              :aria-label="t('system.operation.search.ip')"
+              :placeholder="t('system.operation.search.ip')"
+              clearable
+              @enter="handleSearch"
+            />
+            <AppSelect
+              size="sm"
+              :model-value="queryParams.method"
+              :options="methodOptions"
+              :aria-label="t('system.operation.search.method')"
+              :placeholder="t('system.operation.search.method')"
+              clearable
+              @update:model-value="queryParams.method = typeof $event === 'string' ? $event : ''"
+              @change="handleSearch"
+            />
+            <AppInput
+              v-model="statusText"
+              size="sm"
+              :aria-label="t('system.operation.search.status')"
+              :placeholder="t('system.operation.search.status')"
+              type="number"
+              :min="0"
+              clearable
+              @enter="handleSearch"
+            />
+            <template #actions>
+              <AppButton
+                variant="secondary"
+                size="sm"
+                icon="RotateCw"
+                icon-only
+                :aria-label="t('common.refresh')"
+                :title="t('common.refresh')"
+                :loading="loading"
+                @click="fetchData"
+              />
+            </template>
+          </PageFilterBar>
+        </template>
+      </PageControlBar>
 
-      <template #actions>
-        <el-button
-          type="primary"
-          @click="handleSearch"
-        >
-          {{ t('common.search') }}
-        </el-button>
-        <el-button @click="handleReset">
-          {{ t('common.reset') }}
-        </el-button>
-      </template>
-    </PageSearchSection>
-
-    <PageListSection>
-      <template #table>
-        <el-table
-          :data="tableData"
-          stripe
-        >
-          <el-table-column
-            prop="id"
-            label="ID"
-            width="120"
-          />
-          <el-table-column
-            prop="user_name"
-            :label="t('system.operation.table.userName')"
-            width="120"
-          />
-          <el-table-column
-            prop="method"
-            :label="t('system.operation.table.method')"
-            width="90"
+      <PageListSection :loading="loading">
+        <AppTable :data="tableData">
+          <AppTableColumn
+            prop="path"
+            :label="`${t('system.operation.table.method')} / ${t('system.operation.table.path')}`"
+            min-width="260"
           >
             <template #default="{ row }">
-              <el-tag
-                :type="getMethodTagType(row.method)"
-                size="small"
+              <TableCellStack
+                :secondary="row.id ? `#${row.id}` : '-'"
+                mono-secondary
+                tabular
+                :truncate="false"
               >
-                {{ row.method }}
-              </el-tag>
+                <template #primary>
+                  <StatusPill
+                    compact
+                    mono
+                    class="endpoint-method-pill"
+                    :tone="getHttpMethodTone(row.method)"
+                    :label="row.method || '-'"
+                  />
+                  <AppTooltip
+                    :content="row.path || '-'"
+                    placement="top"
+                  >
+                    <AppButton
+                      variant="link"
+                      size="sm"
+                      class="endpoint-path-button font-mono"
+                      @click="showDetail(row)"
+                    >
+                      <span class="endpoint-path-text">{{ row.path || '-' }}</span>
+                    </AppButton>
+                  </AppTooltip>
+                </template>
+              </TableCellStack>
             </template>
-          </el-table-column>
-          <el-table-column
-            prop="path"
-            :label="t('system.operation.table.path')"
-            min-width="220"
-            show-overflow-tooltip
-          />
-          <el-table-column
+          </AppTableColumn>
+          <AppTableColumn
+            prop="user_name"
+            :label="`${t('system.operation.table.userName')} / ${t('system.operation.table.ip')}`"
+            min-width="150"
+          >
+            <template #default="{ row }">
+              <TableCellStack
+                :primary="row.user_name || '-'"
+                :secondary="getOperatorSecondary(row)"
+                mono-secondary
+                tabular
+              />
+            </template>
+          </AppTableColumn>
+          <AppTableColumn
             prop="status"
             :label="t('system.operation.table.status')"
-            width="120"
+            width="92"
           >
             <template #default="{ row }">
-              <el-tag
-                :type="getStatusTagType(row.status)"
-                size="small"
-              >
-                {{ row.status }}
-              </el-tag>
+              <StatusPill
+                compact
+                mono
+                :tone="getStatusTone(row.status)"
+                :label="String(row.status)"
+              />
             </template>
-          </el-table-column>
-          <el-table-column
-            prop="ip"
-            :label="t('system.operation.table.ip')"
-            width="140"
-          />
-          <el-table-column
+          </AppTableColumn>
+          <AppTableColumn
+            class-name="font-mono"
             prop="trace_id"
             :label="t('system.operation.table.traceId')"
-            min-width="180"
+            min-width="160"
             show-overflow-tooltip
-          />
-          <el-table-column
+          >
+            <template #default="{ row }">
+              {{ row.trace_id || '-' }}
+            </template>
+          </AppTableColumn>
+          <AppTableColumn
+            class-name="tabular-nums"
             prop="created_at"
             :label="t('system.operation.table.time')"
-            width="180"
+            width="168"
           >
             <template #default="{ row }">
               {{ formatDateTime(row.created_at) }}
             </template>
-          </el-table-column>
-          <TableActionColumn :width="100">
-            <template #default="{ row }">
-              <el-button
-                link
-                type="primary"
-                size="small"
-                @click="showDetail(row)"
-              >
-                {{ t('system.operation.action.detail') }}
-              </el-button>
-            </template>
-          </TableActionColumn>
-        </el-table>
-      </template>
+          </AppTableColumn>
+          <TableActionColumn
+            :actions="getOperationActions"
+            :max-visible="1"
+            :compact-max-visible="1"
+            :mobile-max-visible="1"
+            :width="84"
+            :mobile-width="64"
+          />
+          <template #empty>
+            <TableEmptyState
+              :filtered="hasActiveFilters"
+              @reset="handleReset"
+              @refresh="fetchData"
+            />
+          </template>
+        </AppTable>
+        <template #pagination>
+          <PaginationFooter
+            v-model:current-page="queryParams.page"
+            v-model:page-size="queryParams.size"
+            :total="total"
+            variant="flush"
+            show-page-jump
+            @change="fetchData"
+          />
+        </template>
+      </PageListSection>
+    </div>
 
-      <template #pagination>
-        <el-pagination
-          v-model:current-page="queryParams.page"
-          v-model:page-size="queryParams.size"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          class="pagination"
-          @size-change="fetchData"
-          @current-change="fetchData"
-        />
-      </template>
-    </PageListSection>
-
-    <BaseDialog
+    <DetailDialog
       v-model="detailVisible"
       :title="t('system.operation.detail.title')"
       width="920px"
-      class="operation-detail-dialog"
+      :loading="detailLoading"
+      :empty="!detailData"
+      :empty-text="t('system.operation.detail.empty')"
     >
-      <div
-        v-loading="detailLoading"
-        class="detail-content"
-      >
-        <template v-if="detailData">
-          <section class="detail-hero">
-            <div class="detail-hero__main">
-              <p class="detail-hero__label">
-                {{ t('system.operation.detail.recordId') }}
-              </p>
-              <h3 class="detail-hero__title">
-                #{{ detailData.id }}
-              </h3>
-              <p
-                class="detail-hero__path"
-                :title="detailData.path"
-              >
-                {{ detailData.path || '-' }}
-              </p>
-            </div>
-            <div class="detail-hero__tags">
-              <el-tag
-                :type="getMethodTagType(detailData.method)"
-                effect="dark"
-                round
-              >
-                {{ detailData.method || '-' }}
-              </el-tag>
-              <el-tag
-                :type="getStatusTagType(detailData.status)"
-                round
-              >
-                {{ detailData.status }}
-              </el-tag>
-            </div>
-          </section>
+      <template #hero>
+        <section
+          v-if="detailData"
+          class="detail-hero"
+        >
+          <div class="detail-hero__main">
+            <p class="detail-hero__label">
+              {{ t('system.operation.detail.recordId') }}
+            </p>
+            <h3 class="detail-hero__title font-mono tabular-nums">
+              #{{ detailData.id }}
+            </h3>
+            <p
+              class="detail-hero__path font-mono"
+              :title="detailData.path"
+            >
+              {{ detailData.path || '-' }}
+            </p>
+          </div>
+          <div class="detail-hero__tags">
+            <StatusPill
+              compact
+              mono
+              :tone="getHttpMethodTone(detailData.method)"
+              :label="detailData.method || '-'"
+            />
+            <StatusPill
+              compact
+              mono
+              :tone="getStatusTone(detailData.status)"
+              :label="String(detailData.status)"
+            />
+          </div>
+        </section>
+      </template>
 
-          <section class="detail-meta-grid">
-            <div class="meta-item">
-              <span class="meta-item__label">{{ t('system.operation.detail.user') }}</span>
-              <span class="meta-item__value">{{ detailData.user_name || '-' }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">{{ t('system.operation.detail.userId') }}</span>
-              <span class="meta-item__value">{{ detailData.user_id || '-' }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">{{ t('system.operation.detail.ip') }}</span>
-              <span class="meta-item__value">{{ detailData.ip || '-' }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">{{ t('system.operation.detail.latency') }}</span>
-              <span class="meta-item__value">{{ formatLatency(detailData.latency) }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-item__label">{{ t('system.operation.detail.time') }}</span>
-              <span class="meta-item__value">{{ formatDateTime(detailData.created_at) }}</span>
-            </div>
-            <div class="meta-item">
-              <div class="meta-item__header">
-                <span class="meta-item__label">{{ t('system.operation.detail.traceId') }}</span>
-                <el-button
-                  link
-                  type="primary"
-                  size="small"
-                  @click="handleCopy(detailData.trace_id, 'system.operation.message.copyTraceIdSuccess')"
-                >
-                  {{ t('common.copy') }}
-                </el-button>
-              </div>
-              <span
-                class="meta-item__value meta-item__value--break"
-                :title="detailData.trace_id"
+      <template v-if="detailData">
+        <section class="detail-meta-grid">
+          <div class="meta-item">
+            <span class="meta-item__label">{{ t('system.operation.detail.user') }}</span>
+            <span class="meta-item__value">{{ detailData.user_name || '-' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-item__label">{{ t('system.operation.detail.userId') }}</span>
+            <span class="meta-item__value font-mono tabular-nums">{{ detailData.user_id || '-' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-item__label">{{ t('system.operation.detail.ip') }}</span>
+            <span class="meta-item__value font-mono">{{ detailData.ip || '-' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-item__label">{{ t('system.operation.detail.latency') }}</span>
+            <span class="meta-item__value tabular-nums">{{ formatLatency(detailData.latency) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-item__label">{{ t('system.operation.detail.time') }}</span>
+            <span class="meta-item__value tabular-nums">{{ formatDateTime(detailData.created_at) }}</span>
+          </div>
+          <div class="meta-item">
+            <div class="meta-item__header">
+              <span class="meta-item__label">{{ t('system.operation.detail.traceId') }}</span>
+              <AppButton
+                variant="link"
+                size="sm"
+                @click="handleCopy(detailData.trace_id, 'system.operation.message.copyTraceIdSuccess')"
               >
-                {{ detailData.trace_id || '-' }}
-              </span>
+                {{ t('common.copy') }}
+              </AppButton>
             </div>
-            <div class="meta-item meta-item--wide">
-              <span class="meta-item__label">{{ t('system.operation.detail.agent') }}</span>
-              <span
-                class="meta-item__value meta-item__value--break"
-                :title="detailData.agent"
-              >
-                {{ detailData.agent || '-' }}
-              </span>
-            </div>
-          </section>
+            <span
+              class="meta-item__value font-mono"
+              :title="detailData.trace_id"
+            >
+              {{ detailData.trace_id || '-' }}
+            </span>
+          </div>
+          <div class="meta-item meta-item--wide">
+            <span class="meta-item__label">{{ t('system.operation.detail.agent') }}</span>
+            <span
+              class="meta-item__value"
+              :title="detailData.agent"
+            >
+              {{ detailData.agent || '-' }}
+            </span>
+          </div>
+        </section>
 
-          <section
-            v-if="detailData.error_message"
-            class="detail-error"
-          >
-            <span class="detail-error__label">{{ t('system.operation.detail.error') }}</span>
-            <span class="detail-error__value">{{ detailData.error_message }}</span>
-          </section>
+        <section
+          v-if="detailData.error_message"
+          class="detail-error"
+        >
+          <span class="detail-error__label">{{ t('system.operation.detail.error') }}</span>
+          <span class="detail-error__value">{{ detailData.error_message }}</span>
+        </section>
 
-          <section class="detail-payload-grid">
-            <article class="payload-card">
-              <header class="payload-card__header">
-                <h4>{{ t('system.operation.detail.request') }}</h4>
-                <el-button
-                  link
-                  type="primary"
-                  size="small"
-                  @click="handleCopy(formatJson(detailData.params), 'system.operation.message.copyRequestSuccess')"
-                >
-                  {{ t('common.copy') }}
-                </el-button>
-              </header>
-              <pre class="json-viewer">{{ formatJson(detailData.params) || '-' }}</pre>
-            </article>
-            <article class="payload-card">
-              <header class="payload-card__header">
-                <h4>{{ t('system.operation.detail.response') }}</h4>
-                <el-button
-                  link
-                  type="primary"
-                  size="small"
-                  @click="handleCopy(formatJson(detailData.resp), 'system.operation.message.copyResponseSuccess')"
-                >
-                  {{ t('common.copy') }}
-                </el-button>
-              </header>
-              <pre class="json-viewer">{{ formatJson(detailData.resp) || '-' }}</pre>
-            </article>
-          </section>
-        </template>
-        <el-empty
-          v-else
-          :description="t('system.operation.detail.empty')"
-        />
-      </div>
-    </BaseDialog>
+        <section class="detail-payload-grid">
+          <CodePayloadCard
+            :title="t('system.operation.detail.request')"
+            :payload="detailData.params"
+            :copy-success-message="t('system.operation.message.copyRequestSuccess')"
+          />
+          <CodePayloadCard
+            :title="t('system.operation.detail.response')"
+            :payload="detailData.resp"
+            :copy-success-message="t('system.operation.message.copyResponseSuccess')"
+          />
+        </section>
+      </template>
+    </DetailDialog>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.detail-content {
+.endpoint-method-pill {
+  flex-shrink: 0;
+}
+
+.btn.endpoint-path-button {
+  padding: 0;
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+  justify-content: flex-start;
+  overflow: hidden;
+
+  &:hover:not(:disabled) {
+    color: var(--primary-text);
+  }
+}
+
+.endpoint-path-text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: inherit;
+}
+
+.detail-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--app-radius-sm);
+  background: var(--surface-subtle);
+}
+
+.detail-hero__main {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.detail-hero__label,
+.meta-item__label {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.detail-hero__title {
+  margin: 4px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.detail-hero__path {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.detail-hero__tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-meta-grid,
+.detail-payload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-meta-grid {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--app-radius-sm);
+}
+
+.meta-item {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-height: calc(100vh - 320px);
-  overflow: auto;
-  padding-right: 4px;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
 
-  .detail-hero {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 16px 18px;
-    border: 1px solid var(--el-border-color-light);
-    border-radius: 12px;
-    background: linear-gradient(130deg, var(--el-color-primary-light-9) 0%, var(--el-fill-color-light) 100%);
+.meta-item--wide {
+  grid-column: 1 / -1;
+  border-bottom: 0;
+}
 
-    .detail-hero__main {
-      min-width: 0;
-    }
+.meta-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 
-    .detail-hero__label {
-      margin: 0;
-      font-size: 12px;
-      line-height: 1;
-      color: var(--el-text-color-secondary);
-    }
+.meta-item__value {
+  font-size: 14px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
 
-    .detail-hero__title {
-      margin: 8px 0 10px;
-      font-size: 22px;
-      line-height: 1;
-      color: var(--el-text-color-primary);
-      font-weight: 600;
-    }
+.detail-error {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--data-badge-danger-border);
+  border-radius: var(--app-radius-sm);
+  background: var(--data-badge-danger-bg);
+}
 
-    .detail-hero__path {
-      margin: 0;
-      color: var(--el-text-color-regular);
-      font-size: 13px;
-      line-height: 1.6;
-      word-break: break-all;
-    }
+.detail-error__label {
+  font-size: 12px;
+  color: var(--data-badge-danger-text);
+}
 
-    .detail-hero__tags {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-shrink: 0;
-      padding-top: 2px;
-    }
-  }
+.detail-error__value {
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
 
-  .detail-meta-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+.detail-payload-grid {
+  gap: 14px;
+}
 
-    .meta-item {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px 14px;
-      border: 1px solid var(--el-border-color-lighter);
-      border-radius: 10px;
-      background: var(--el-fill-color-blank);
-
-      &.meta-item--wide {
-        grid-column: 1 / -1;
-      }
-
-      .meta-item__label {
-        font-size: 12px;
-        line-height: 1;
-        color: var(--el-text-color-secondary);
-      }
-
-      .meta-item__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
-
-      .meta-item__value {
-        font-size: 14px;
-        line-height: 1.4;
-        color: var(--el-text-color-primary);
-      }
-
-      .meta-item__value--break {
-        word-break: break-all;
-      }
-    }
-  }
-
-  .detail-error {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 14px;
-    border: 1px solid var(--el-color-danger-light-5);
-    border-radius: 10px;
-    background: var(--el-color-danger-light-9);
-
-    .detail-error__label {
-      font-size: 12px;
-      line-height: 1;
-      color: var(--el-color-danger);
-    }
-
-    .detail-error__value {
-      color: var(--el-text-color-primary);
-      font-size: 13px;
-      line-height: 1.5;
-      word-break: break-all;
-    }
-  }
-
+@include mobile {
+  .detail-meta-grid,
   .detail-payload-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-
-    .payload-card {
-      border: 1px solid var(--el-border-color-lighter);
-      border-radius: 12px;
-      background: var(--el-fill-color-blank);
-      overflow: hidden;
-
-      .payload-card__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--el-border-color-lighter);
-        background: var(--el-fill-color-light);
-
-        h4 {
-          margin: 0;
-          color: var(--el-text-color-primary);
-          font-size: 14px;
-          font-weight: 600;
-          line-height: 1;
-        }
-      }
-    }
-  }
-
-  .json-viewer {
-    margin: 0;
-    padding: 14px;
-    background: var(--el-bg-color-page);
-    color: var(--el-text-color-primary);
-    font-size: 12px;
-    line-height: 1.6;
-    min-height: 240px;
-    max-height: 320px;
-    overflow: auto;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  }
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: var(--el-border-color);
-  }
-
-  :deep(.el-empty) {
-    padding: 36px 0;
-  }
-}
-
-:deep(.operation-detail-dialog .el-dialog__body) {
-  max-height: calc(100vh - 240px);
-  overflow: hidden;
-}
-
-@media (max-width: 900px) {
-  .detail-content {
-    .detail-hero {
-      flex-direction: column;
-
-      .detail-hero__tags {
-        width: 100%;
-      }
-    }
-
-    .detail-meta-grid,
-    .detail-payload-grid {
-      grid-template-columns: 1fr;
-    }
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>
