@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Lock } from '@element-plus/icons-vue'
+import { notify } from '@/utils/notify'
+import type { FormInstance, FormRules } from '@/types/form'
 import CryptoJS from 'crypto-js'
 import { resetPassword } from '@/api/auth'
 import { useI18n } from 'vue-i18n'
 import { isHandledHttpError } from '@/utils/httpError'
+import AuthPageShell from '@/components/AuthPageShell/index.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,7 +44,7 @@ onMounted(() => {
   if (typeof code === 'string' && code) {
     safeCode.value = code
   } else {
-    ElMessage.error(t('reset.error.safeCodeMissing'))
+    notify.error(t('reset.error.safeCodeMissing'))
     router.replace('/login')
   }
 })
@@ -53,7 +54,7 @@ async function handleReset() {
   if (valid === false) return
 
   if (!safeCode.value) {
-    ElMessage.error(t('reset.error.safeCodeMissing'))
+    notify.error(t('reset.error.safeCodeMissing'))
     return
   }
 
@@ -66,14 +67,15 @@ async function handleReset() {
     })
 
     if (data.code === 0) {
-      ElMessage.success(t('reset.success'))
+      notify.success(t('reset.success'))
       router.push('/login')
     } else {
       throw new Error(data.msg || t('reset.error.failed'))
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (!isHandledHttpError(error)) {
-      ElMessage.error(error.message || t('reset.error.failed'))
+      const message = error instanceof Error ? error.message : ''
+      notify.error(message || t('reset.error.failed'))
     }
   } finally {
     loading.value = false
@@ -86,122 +88,94 @@ function handleBack() {
 </script>
 
 <template>
-  <div class="reset-wrapper">
-    <PageCard class="reset-card">
-      <h2>{{ t('reset.title') }}</h2>
-      <p class="tips">
-        {{ t('reset.tips') }}
-      </p>
-      <el-form
-        ref="formRef"
-        :model="form"
-        :rules="rules"
-        label-position="top"
-        class="reset-form"
+  <AuthPageShell
+    max-width="420px"
+    card-padding="compact"
+    :centered="false"
+  >
+    <h2 class="reset-title">
+      {{ t('reset.title') }}
+    </h2>
+    <p class="tips">
+      {{ t('reset.tips') }}
+    </p>
+    <AppForm
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      label-position="top"
+      class="reset-form"
+      @keyup.enter="handleReset"
+    >
+      <AppFormItem
+        :label="t('reset.password')"
+        prop="password"
       >
-        <el-form-item
-          :label="t('reset.password')"
-          prop="password"
-        >
-          <el-input
-            v-model="form.password"
-            type="password"
-            show-password
-            :prefix-icon="Lock"
-          />
-        </el-form-item>
-        <el-form-item
-          :label="t('reset.confirmPassword')"
-          prop="confirmPassword"
-        >
-          <el-input
-            v-model="form.confirmPassword"
-            type="password"
-            show-password
-            :prefix-icon="Lock"
-          />
-        </el-form-item>
-      </el-form>
-      <div class="actions">
-        <el-button @click="handleBack">
-          {{ t('reset.backLogin') }}
-        </el-button>
-        <el-button
-          type="primary"
-          :loading="loading"
-          @click="handleReset"
-        >
-          {{ t('reset.confirm') }}
-        </el-button>
-      </div>
-    </PageCard>
-  </div>
+        <AppInput
+          v-model="form.password"
+          size="lg"
+          type="password"
+          show-password
+          prefix-icon="Lock"
+        />
+      </AppFormItem>
+      <AppFormItem
+        :label="t('reset.confirmPassword')"
+        prop="confirmPassword"
+      >
+        <AppInput
+          v-model="form.confirmPassword"
+          size="lg"
+          type="password"
+          show-password
+          prefix-icon="Lock"
+        />
+      </AppFormItem>
+    </AppForm>
+    <div class="actions">
+      <AppButton @click="handleBack">
+        {{ t('reset.backLogin') }}
+      </AppButton>
+      <AppButton
+        variant="primary"
+        :loading="loading"
+        @click="handleReset"
+      >
+        {{ t('reset.confirm') }}
+      </AppButton>
+    </div>
+  </AuthPageShell>
 </template>
 
-<style scoped>
-.reset-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 20px;
-}
-
-.reset-card {
-  width: 100%;
-  max-width: 420px;
-}
-
-.reset-card :deep(.el-card__body) {
-  padding: 32px 28px;
-}
-
-.reset-card h2 {
-  margin: 0 0 10px;
-  font-size: 24px;
+<style lang="scss" scoped>
+.reset-title {
+  margin: 0 0 8px;
+  font-size: 22px;
   font-weight: 700;
-  color: var(--app-text-primary);
+  color: var(--text-primary);
 }
 
 .tips {
   margin: 0 0 24px;
-  color: var(--app-text-muted);
+  color: var(--text-tertiary);
   font-size: 13px;
   line-height: 1.6;
 }
 
-.reset-form :deep(.el-form-item) {
-  margin-bottom: 18px;
-}
+.reset-form {
+  :deep(.app-form-item) {
+    margin-bottom: 18px;
+  }
 
-.reset-form :deep(.el-form-item__label) {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--app-text-regular);
-}
+  :deep(.app-form-item__label) {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
 
-.reset-form :deep(.el-input__wrapper) {
-  min-height: 48px;
-  padding: 0 14px;
-  border-radius: 12px;
-  background-color: var(--app-surface-muted);
-  border: 1px solid var(--app-border);
-  box-shadow: none;
-  transition: all 0.25s ease;
-}
-
-.reset-form :deep(.el-input__wrapper:hover) {
-  background-color: var(--app-surface-strong);
-}
-
-.reset-form :deep(.el-input__wrapper.is-focus) {
-  background-color: var(--app-surface-strong);
-  box-shadow: 0 0 0 1px var(--el-color-primary) inset !important;
-}
-
-.reset-form :deep(.el-input__inner) {
-  font-size: 15px;
-  letter-spacing: 0.2px;
+  :deep(.app-input__inner) {
+    font-size: 14px;
+  }
 }
 
 .actions {
@@ -209,34 +183,22 @@ function handleBack() {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 8px;
-}
 
-.actions :deep(.el-button) {
-  min-width: 96px;
-  height: 40px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.actions :deep(.el-button--primary) {
-  background: var(--primary-gradient);
-  border: none;
-  box-shadow: 0 6px 14px rgba(102, 126, 234, 0.28);
-}
-
-.actions :deep(.el-button--primary:hover) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(102, 126, 234, 0.35);
-}
-
-@media (max-width: 640px) {
-  .reset-card :deep(.el-card__body) {
-    padding: 26px 20px;
+  :deep(.btn) {
+    min-width: 96px;
+    height: var(--control-height-md);
+    border-radius: var(--app-radius-sm);
+    font-weight: 600;
+    box-shadow: none;
   }
 
-  .actions {
-    justify-content: center;
+  @include mobile {
+    justify-content: stretch;
     margin-top: 12px;
+
+    :deep(.btn) {
+      flex: 1;
+    }
   }
 }
 </style>

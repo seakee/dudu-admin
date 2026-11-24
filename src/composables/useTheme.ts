@@ -41,6 +41,17 @@ export function useTheme() {
         }
     )
 
+    // 同步 CPAMP v2 data-theme 属性
+    watch(
+        isDark,
+        (dark) => {
+            if (typeof document !== 'undefined') {
+                document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'white')
+            }
+        },
+        { immediate: true }
+    )
+
     return {
         isDark
     }

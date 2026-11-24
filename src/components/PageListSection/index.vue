@@ -1,81 +1,82 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    naked?: boolean
+    loading?: boolean
   }>(),
   {
-    naked: false
+    loading: false
   }
 )
+
+const slots = useSlots()
+const hasPagination = computed(() => Boolean(slots.pagination))
+const hasToolbar = computed(() => Boolean(slots.toolbar))
 </script>
 
 <template>
   <PageCard
-    v-if="!props.naked"
+    v-loading="props.loading"
     variant="table"
     class="page-list-section"
   >
-    <slot name="table">
-      <slot />
-    </slot>
+    <template
+      v-if="$slots.header"
+      #header
+    >
+      <slot name="header" />
+    </template>
+
+    <div
+      v-if="hasToolbar"
+      class="page-list-section__toolbar"
+    >
+      <slot name="toolbar" />
+    </div>
+
+    <div
+      class="page-list-section__body"
+      :class="{ 'has-pagination': hasPagination }"
+    >
+      <slot name="table">
+        <slot />
+      </slot>
+    </div>
+
     <slot name="pagination" />
   </PageCard>
-
-  <section
-    v-else
-    class="page-list-section page-list-section--naked"
-  >
-    <slot name="table">
-      <slot />
-    </slot>
-    <slot name="pagination" />
-  </section>
 </template>
 
 <style lang="scss" scoped>
 .page-list-section {
-  :deep(.el-table) {
-    border-radius: 12px;
-    overflow: hidden;
-  }
+  min-width: 0;
+  border-radius: var(--app-radius-lg);
+  background: color-mix(in srgb, var(--surface-subtle) 65%, var(--bg-primary));
+}
 
-  :deep(.el-table th.el-table__cell) {
-    padding: 14px 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--app-text-primary);
-    letter-spacing: 0.2px;
-  }
+.page-list-section__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  padding: 12px 16px 6px;
+}
 
-  :deep(.el-table .el-table__cell) {
-    padding: 12px 0;
-  }
+.page-list-section__body {
+  padding: 8px 12px 10px;
 
-  :deep(.el-table .cell) {
-    line-height: 1.45;
-  }
-
-  :deep(.el-table .el-tag) {
-    line-height: 1.15;
-  }
-
-  :deep(.pagination) {
-    margin-top: var(--app-gap);
-    display: flex;
-    justify-content: flex-end;
+  &.has-pagination {
+    padding-bottom: 4px;
   }
 }
 
-.page-list-section--naked {
-  margin-bottom: 0;
-}
+@include mobile {
+  .page-list-section__toolbar {
+    padding: 10px 12px 4px;
+  }
 
-@media (max-width: 992px) {
-  .page-list-section {
-    :deep(.el-table th.el-table__cell),
-    :deep(.el-table .el-table__cell) {
-      padding: 10px 0;
-    }
+  .page-list-section__body {
+    padding: 6px 8px 8px;
   }
 }
 </style>

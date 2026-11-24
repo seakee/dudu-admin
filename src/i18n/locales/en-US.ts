@@ -4,6 +4,7 @@ export default {
     name: 'Admin'
   },
   common: {
+    all: 'All',
     confirm: 'Confirm',
     cancel: 'Cancel',
     submit: 'Submit',
@@ -30,7 +31,20 @@ export default {
     placeholder: 'Please enter',
     selectPlaceholder: 'Please select',
     loading: 'Loading...',
-    view: 'View'
+    view: 'View',
+    more: 'More',
+    refresh: 'Refresh',
+    clearFilters: 'Clear filters',
+    noData: 'No records yet',
+    noMatch: 'No matching results',
+    noMatchDesc: 'Try adjusting your search keywords or clearing active filters.',
+    noDataDesc: 'There are no items in this workspace yet. Refresh or create a new record.',
+    unsavedChanges: 'Unsaved changes pending',
+    allSaved: 'All changes saved',
+    selectedCount: '{count} selected',
+    clearSelection: 'Clear selection',
+    clearAll: 'Clear all',
+    expandMore: 'Show {count} more'
   },
   route: {
     login: 'Login',
@@ -56,7 +70,9 @@ export default {
     light: 'Light',
     dark: 'Dark',
     auto: 'System',
-    tooltip: 'Theme'
+    tooltip: 'Theme & Appearance',
+    visualEffects: 'Reduce transparency & motion',
+    tagsView: 'Show tab bar'
   },
   localeSwitch: {
     tooltip: 'Language',
@@ -155,10 +171,11 @@ export default {
   },
   profile: {
     title: 'Profile',
-    pageSubtitle: 'Manage profile details, login identifiers, and high-risk verification methods in one place.',
+    tabProfile: 'Profile',
+    tabSecurity: 'Security & Credentials',
     overviewTitle: 'Account Overview',
-    overviewSubtitle: 'Identity details and security readiness for the current account are summarized here.',
-    sectionProfile: 'Profile',
+    overviewSubtitle: 'Identity details and current security status.',
+    sectionProfile: 'Basic Info',
     sectionPassword: 'Change Password',
     sectionAccount: 'Change Login Identifier',
     sectionOAuth: 'OAuth Accounts',
@@ -174,11 +191,11 @@ export default {
     enterOldPasswordDesc: 'Enter your current password to continue',
     enterPasswordDesc: 'Enter your password to continue',
     roleAdmin: 'Admin',
-    securityTitle: 'Security Center',
-    securitySubtitle: 'Security settings & 2FA',
-    securityStatusSafe: 'Secure',
+    securityTitle: 'Sign-in & Verification',
+    securitySubtitle: 'Manage your password, local login identifiers, and 2FA protection.',
+    securityStatusSafe: 'Protected',
     actionChange: 'Change',
-    editorSubtitle: 'Update display name and avatar URL with lightweight validation before submission.',
+    editorSubtitle: 'Update display name and avatar URL. Save changes to apply.',
     tfaSetupTitle: 'Bind an Authenticator App',
     tfaSetupDesc: 'Scan the QR code with an authenticator app, or enter the key below manually.',
     scanTip: 'Scan with Google Authenticator or similar app',
@@ -243,6 +260,7 @@ export default {
       userNameRequired: 'Please enter a username',
       userNameReserved: 'This username uses a reserved prefix or suffix. Please choose another one.',
       identifierRequired: 'Email or phone is required',
+      identifierUnchanged: 'No changes detected for your login identifier',
       emailInvalid: 'Invalid email format',
       phoneInvalid: 'Invalid phone format'
     },
@@ -570,7 +588,7 @@ export default {
         parent: 'Parent Menu',
         noParent: 'No Parent',
         permission: 'Permission ID',
-        iconPlaceholder: 'Element Plus icon name',
+        iconPlaceholder: 'Lucide icon name',
         permissionPlaceholder: 'Select permission'
       },
       detail: {
@@ -690,5 +708,18 @@ export default {
     forbidden: 'Access denied',
     notFound: 'Resource not found',
     serverError: 'Server error'
+  },
+  pagination: {
+    totalRecords: '{total} records total',
+    rangeRecords: 'Showing {start}–{end} of {total}',
+    pageSize: 'Rows',
+    perPage: '{size} / page',
+    prev: 'Prev',
+    next: 'Next',
+    jumpTo: 'Go to',
+    pageUnit: ''
+  },
+  footer: {
+    designedBy: 'Designed by'
   }
 }

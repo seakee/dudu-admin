@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "rules": {
+    "undefined-var": {},
+    "radius": {
+      "src/assets/styles/tokens.scss": 2
+    },
+    "font-weight": {},
+    "scss-radius-var": {},
+    "color-literal": {},
+    "important": {}
+  },
+  "scssRadiusDefinitions": {}
+}

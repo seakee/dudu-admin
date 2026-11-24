@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "properties": {
+    "--content-center-x": "layouts/default/index.vue: main content center x coordinate",
+    "--metric-summary-columns": "components/MetricSummaryGrid/index.vue: dynamic grid column count",
+    "--page-floating-dock-height": "components/FloatingActionDock/index.vue: active floating dock height",
+    "--page-filter-control-width": "components/PageFilterBar/index.vue: uniform filter control width",
+    "--secondary-shell-floating-action-height": "components/SecondaryScreenShell/index.vue: secondary shell floating action height"
+  }
+}

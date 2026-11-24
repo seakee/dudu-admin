@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import notify from '@/utils/notify'
+import { confirmDialog } from '@/utils/confirm'
 import { clearSessionArtifacts, getToken } from '@/utils/auth'
 import { isHandledHttpError, markHandledHttpError } from '@/utils/httpError'
 import type { ApiResponse } from '@/types/api'
@@ -89,18 +90,20 @@ service.interceptors.response.use(
       const mappedMessage = mappedI18nKey ? t(mappedI18nKey) : ''
       const finalMessage = mappedMessage || res.msg || fallbackMessage
 
-      ElMessage.error(finalMessage)
+      notify.error(finalMessage)
 
       // Token 过期或无效
       if ([10001, 11005, 11006, 11009, 401, 403].includes(res.code)) {
-        ElMessageBox.confirm(t('request.sessionExpired'), t('navbar.dialogTitle'), {
+        confirmDialog(t('request.sessionExpired'), t('navbar.dialogTitle'), {
           confirmButtonText: t('request.relogin'),
           cancelButtonText: t('common.cancel'),
           type: 'warning'
-        }).then(() => {
-          clearSessionArtifacts()
-          window.location.href = '/login'
         })
+          .then(() => {
+            clearSessionArtifacts()
+            window.location.href = '/login'
+          })
+          .catch(() => {})
       }
 
       return Promise.reject(markHandledHttpError(new Error(finalMessage), res.code))
@@ -143,7 +146,7 @@ service.interceptors.response.use(
       message = t('request.timeout')
     }
 
-    ElMessage.error(message)
+    notify.error(message)
     return Promise.reject(error)
   }
 )

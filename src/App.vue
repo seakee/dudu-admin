@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElConfigProvider } from 'element-plus'
-import en from 'element-plus/es/locale/lang/en'
-import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores'
 import { useTheme } from '@/composables/useTheme'
+import { useVisualEffects } from '@/composables/useVisualEffects'
 import { getAppName } from '@/utils/app'
+import AppBackground from '@/components/AppBackground/index.vue'
+import AppNotification from '@/components/AppNotification/index.vue'
+import AppConfirmDialog from '@/components/AppConfirmDialog/index.vue'
 
 const appStore = useAppStore()
 const route = useRoute()
 const { t } = useI18n()
 
 useTheme()
-
-const elementLocale = computed(() => (appStore.locale === 'zh-CN' ? zhCn : en))
+useVisualEffects()
 
 const pageTitle = computed(() => {
   const titleKey = route.meta?.titleKey as string | undefined
@@ -32,20 +32,27 @@ watch(
   },
   { immediate: true }
 )
+
+watch(
+  () => appStore.locale,
+  (locale) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = locale
+    }
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
-  <ElConfigProvider
-    :locale="elementLocale"
-    :size="appStore.size"
-  >
-    <div class="app-shell">
-      <AppBackground />
-      <div class="app-content">
-        <router-view />
-      </div>
+  <div class="app-shell">
+    <AppBackground />
+    <div class="app-content">
+      <router-view />
     </div>
-  </ElConfigProvider>
+    <AppNotification />
+    <AppConfirmDialog />
+  </div>
 </template>
 
 <style scoped>

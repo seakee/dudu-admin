@@ -2,7 +2,6 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -22,6 +21,9 @@ export default defineConfig(({ mode }) => {
   const apiRoutePrefix = normalizeApiRoutePrefix(env.VITE_API_ROUTE_PREFIX)
 
   return {
+    define: {
+      'import.meta.env.VITE_APP_VERSION': JSON.stringify(env.npm_package_version || '1.0.0')
+    },
     resolve: {
       alias: {
         '@': resolve(__dirname, 'src')
@@ -33,17 +35,15 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return
 
-            if (id.includes('@element-plus/icons-vue')) return 'element-plus-icons'
-            if (id.includes('element-plus')) return 'element-plus'
             if (id.includes('@fortawesome')) return 'fontawesome'
 
             if (
-              id.includes('/vue/') ||
-              id.includes('/@vue/') ||
-              id.includes('vue-router') ||
-              id.includes('pinia') ||
-              id.includes('vue-i18n') ||
-              id.includes('@vueuse/core')
+              id.includes('/node_modules/vue/') ||
+              id.includes('/node_modules/@vue/') ||
+              id.includes('/node_modules/vue-router/') ||
+              id.includes('/node_modules/pinia/') ||
+              id.includes('/node_modules/vue-i18n/') ||
+              id.includes('/node_modules/@vueuse/core/')
             ) {
               return 'vue-vendor'
             }
@@ -66,18 +66,16 @@ export default defineConfig(({ mode }) => {
       vue(),
       AutoImport({
         imports: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
-        resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
         dts: 'src/types/auto-imports.d.ts'
       }),
       Components({
-        resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
         dts: 'src/types/components.d.ts'
       })
     ],
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@use "@/assets/styles/element.scss" as *;`
+          additionalData: `@use "@/assets/styles/scss-prelude.scss" as *;`
         }
       }
     },

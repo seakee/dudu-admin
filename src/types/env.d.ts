@@ -12,6 +12,10 @@ interface ImportMetaEnv {
   readonly VITE_API_ROUTE_PREFIX: string
   readonly VITE_USE_MOCK: string
   readonly VITE_TOKEN_KEY: string
+  readonly VITE_APP_VERSION?: string
+  readonly VITE_APP_REPO_URL?: string
+  readonly VITE_APP_AUTHOR?: string
+  readonly VITE_APP_AUTHOR_URL?: string
 }
 
 interface ImportMeta {

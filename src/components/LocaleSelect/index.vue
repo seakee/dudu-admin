@@ -4,6 +4,16 @@ import { useAppStore } from '@/stores'
 import { type Locale } from '@/i18n'
 import { useI18n } from 'vue-i18n'
 
+interface DropdownItem {
+  key: string
+  label?: string
+  icon?: string
+  disabled?: boolean
+  tone?: 'default' | 'danger'
+  divided?: boolean
+  active?: boolean
+}
+
 const props = defineProps<{
   iconOnly?: boolean
 }>()
@@ -19,9 +29,17 @@ const localeOptions = computed(() => [
 const currentLocale = computed(() => appStore.locale)
 const isIconOnly = computed(() => props.iconOnly === true)
 const currentLabel = computed(() => {
-  const match = localeOptions.value.find(item => item.value === currentLocale.value)
+  const match = localeOptions.value.find((item) => item.value === currentLocale.value)
   return match ? match.label : currentLocale.value
 })
+
+const dropdownItems = computed<DropdownItem[]>(() =>
+  localeOptions.value.map((item) => ({
+    key: item.value,
+    label: item.label,
+    active: currentLocale.value === item.value
+  }))
+)
 
 function handleSetLocale(locale: string) {
   appStore.setLocale(locale as Locale)
@@ -29,109 +47,94 @@ function handleSetLocale(locale: string) {
 </script>
 
 <template>
-  <el-dropdown
-    trigger="click"
-    @command="handleSetLocale"
+  <AppDropdown
+    :items="dropdownItems"
+    placement="bottom-end"
+    :aria-label="t('localeSwitch.tooltip')"
+    @select="handleSetLocale"
   >
-    <div
-      class="locale-select-container"
-      :class="{ 'icon-only': isIconOnly }"
-    >
-      <el-tooltip
+    <template #trigger>
+      <AppTooltip
         :content="t('localeSwitch.tooltip')"
         placement="bottom"
       >
-        <template v-if="!isIconOnly">
-          <span class="locale-label">{{ currentLabel }}</span>
-        </template>
-        <template v-else>
-          <el-icon
-            :size="20"
-            class="locale-icon"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-              />
-              <path
-                d="M3 12h18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-              />
-              <path
-                d="M12 3c3.5 3.8 3.5 13.2 0 18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-              />
-              <path
-                d="M12 3c-3.5 3.8-3.5 13.2 0 18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-              />
-            </svg>
-          </el-icon>
-        </template>
-      </el-tooltip>
-    </div>
-    <template #dropdown>
-      <el-dropdown-menu>
-        <el-dropdown-item
-          v-for="item in localeOptions"
-          :key="item.value"
-          :command="item.value"
-          :disabled="currentLocale === item.value"
+        <button
+          type="button"
+          class="locale-select-container"
+          :class="{ 'icon-only': isIconOnly }"
+          :aria-label="t('localeSwitch.tooltip')"
         >
-          {{ item.label }}
-        </el-dropdown-item>
-      </el-dropdown-menu>
+          <span class="locale-select-trigger">
+            <span
+              v-if="!isIconOnly"
+              class="locale-label"
+            >
+              {{ currentLabel }}
+            </span>
+            <AppIcon
+              v-else
+              name="Globe"
+              :size="18"
+              class="locale-icon"
+            />
+          </span>
+        </button>
+      </AppTooltip>
     </template>
-  </el-dropdown>
+  </AppDropdown>
 </template>
 
 <style lang="scss" scoped>
 .locale-select-container {
-  padding: 0 12px;
-  cursor: pointer;
-  display: flex;
+  @include button-reset;
+  height: var(--floating-control-size);
+  padding: 0;
+  border-radius: var(--app-radius-sm);
+  display: inline-flex;
   align-items: center;
-  height: 100%;
-  transition: background 0.3s;
+  justify-content: center;
+  color: var(--text-secondary);
+  background: transparent;
+  transition:
+    background-color $transition-fast,
+    color $transition-fast;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--app-accent-soft);
+    color: var(--primary-text);
+
+    .locale-label {
+      color: var(--primary-text);
+    }
+  }
+
+  &.icon-only {
+    width: var(--floating-control-size);
+
+    .locale-select-trigger {
+      padding: 0;
+    }
   }
 }
 
-.locale-select-container.icon-only {
+.locale-select-trigger {
+  width: 100%;
+  height: 100%;
   padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .locale-label {
   font-size: 13px;
-  color: #5a5e66;
+  color: var(--text-secondary);
   font-weight: 600;
   letter-spacing: 0.2px;
+  transition: color $transition-fast;
 }
 
 .locale-icon {
   color: inherit;
-}
-
-:show-active-dark .locale-select-container:hover {
-  background: rgba(255, 255, 255, 0.08);
 }
 </style>

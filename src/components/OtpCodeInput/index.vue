@@ -204,7 +204,7 @@ defineExpose({
       :key="`otp-cell-${index}`"
       :ref="(element) => setInputRef(element, index)"
       :value="digit"
-      class="otp-code-input__cell"
+      class="otp-code-input__cell tabular-nums font-mono"
       type="text"
       maxlength="1"
       inputmode="numeric"
@@ -226,44 +226,50 @@ defineExpose({
 }
 
 .otp-code-input__cell {
-  height: 52px;
-  border-radius: 12px;
-  border: 1px solid var(--el-border-color);
-  background: var(--app-surface-strong);
-  font-size: 24px;
+  height: 48px;
+  border-radius: var(--app-radius-md);
+  border: 1px solid var(--app-input-border);
+  background: var(--app-input-bg);
+  font-family: var(--font-mono);
+  font-size: 22px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   text-align: center;
-  color: var(--app-text-primary);
+  color: var(--text-primary);
   outline: none;
-  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+  transition:
+    border-color $transition-fast,
+    box-shadow $transition-fast,
+    background-color $transition-fast;
 
-  &:hover {
-    border-color: var(--el-color-primary-light-5);
+  &:hover:not(:disabled) {
+    border-color: var(--border-hover);
   }
 
   &:focus {
-    border-color: var(--el-color-primary);
-    box-shadow: 0 0 0 2px rgb(64 158 255 / 15%);
-    background: var(--el-fill-color-light);
+    border-color: var(--app-input-border-focus);
+    background: var(--app-input-bg-focus);
+    box-shadow: 0 0 0 2px var(--focus-inset);
   }
 
   &:disabled {
     cursor: not-allowed;
-    background: var(--app-surface-muted);
-    color: var(--app-text-muted);
+    border-color: var(--border-subtle);
+    background: var(--surface-subtle);
+    color: var(--text-tertiary);
   }
 }
 
-@media (max-width: 768px) {
+@include mobile {
   .otp-code-input {
     gap: 8px;
     width: 100%;
   }
 
   .otp-code-input__cell {
-    height: 46px;
-    border-radius: 10px;
-    font-size: 20px;
+    height: 42px;
+    border-radius: var(--app-radius-sm);
+    font-size: 18px;
   }
 }
 </style>

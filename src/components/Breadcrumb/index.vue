@@ -9,33 +9,34 @@ const router = useRouter()
 const { t } = useI18n()
 
 const breadcrumbs = computed(() => {
-  // get matched routes
-  let matched = route.matched.filter(item => item.meta && item.meta.title)
-  const first = matched[0]
-
-  if (!isDashboard(first)) {
-    // optional: add dashboard as home
-    // matched = [{ path: '/dashboard', meta: { title: '首页' } } as any].concat(matched)
-  }
-
-  return matched.filter(item => item.meta && (item.meta.titleKey || item.meta.title) && item.meta.breadcrumb !== false)
+  const matched = route.matched.filter((item) => item.meta && (item.meta.titleKey || item.meta.title))
+  return matched.filter(
+    (item) => item.meta && (item.meta.titleKey || item.meta.title) && item.meta.breadcrumb !== false
+  )
 })
 
-function isDashboard(route: RouteLocationMatched) {
-  const name = route && route.name
-  if (!name) {
-    return false
-  }
-  return name.toString().trim().toLocaleLowerCase() === 'dashboard'
-}
-
-function handleLink(item: any) {
+function handleLink(item: RouteLocationMatched) {
   const { redirect, path } = item
-  if (redirect) {
+  if (redirect && typeof redirect === 'string') {
     router.push(redirect)
     return
   }
   router.push(path)
+}
+
+function getItemHref(item: RouteLocationMatched): string {
+  if (item.redirect && typeof item.redirect === 'string' && item.redirect !== 'noRedirect') {
+    return item.redirect
+  }
+  return item.path
+}
+
+function getItemTitle(item: RouteLocationMatched): string {
+  const titleKey = item.meta?.titleKey as string | undefined
+  if (titleKey) {
+    return t(titleKey)
+  }
+  return String(item.meta?.title || '')
 }
 
 function getBreadcrumbKey(item: RouteLocationMatched, index: number) {
@@ -44,42 +45,124 @@ function getBreadcrumbKey(item: RouteLocationMatched, index: number) {
 </script>
 
 <template>
-  <el-breadcrumb
+  <nav
     class="app-breadcrumb"
-    separator="/"
+    aria-label="Breadcrumb"
   >
-    <transition-group name="breadcrumb">
-      <el-breadcrumb-item
+    <TransitionGroup
+      name="breadcrumb"
+      tag="ol"
+      class="app-breadcrumb__list"
+    >
+      <li
         v-for="(item, index) in breadcrumbs"
         :key="getBreadcrumbKey(item, index)"
+        class="app-breadcrumb__item"
       >
         <span
-          v-if="item.redirect === 'noRedirect' || index == breadcrumbs.length - 1"
-          class="no-redirect"
+          v-if="index > 0"
+          class="app-breadcrumb__separator"
+          aria-hidden="true"
         >
-          {{ item.meta.titleKey ? t(item.meta.titleKey) : item.meta.title }}
+          /
+        </span>
+        <span
+          v-if="item.redirect === 'noRedirect' || index === breadcrumbs.length - 1"
+          class="no-redirect"
+          :aria-current="index === breadcrumbs.length - 1 ? 'page' : undefined"
+        >
+          {{ getItemTitle(item) }}
         </span>
         <a
           v-else
+          class="app-breadcrumb__link"
+          :href="getItemHref(item)"
           @click.prevent="handleLink(item)"
         >
-          {{ item.meta.titleKey ? t(item.meta.titleKey) : item.meta.title }}
+          {{ getItemTitle(item) }}
         </a>
-      </el-breadcrumb-item>
-    </transition-group>
-  </el-breadcrumb>
+      </li>
+    </TransitionGroup>
+  </nav>
 </template>
 
 <style lang="scss" scoped>
-.app-breadcrumb.el-breadcrumb {
-  display: inline-block;
-  font-size: 14px;
-  line-height: 50px;
+.app-breadcrumb {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  height: var(--navbar-height);
   margin-left: 8px;
+  font-size: 14px;
 
-  .no-redirect {
-    color: #97a8be;
-    cursor: text;
+  @include mobile {
+    margin-left: 4px;
   }
+}
+
+.app-breadcrumb__list {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-breadcrumb__item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+
+  &:not(:last-child) {
+    flex-shrink: 0;
+
+    @include mobile {
+      display: none;
+    }
+  }
+
+  @include mobile {
+    &:last-child .app-breadcrumb__separator {
+      display: none;
+    }
+  }
+}
+
+.app-breadcrumb__separator {
+  flex-shrink: 0;
+  margin: 0 8px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.app-breadcrumb__link {
+  color: var(--text-tertiary);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: var(--primary-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--app-input-border-focus);
+    outline-offset: 2px;
+    border-radius: var(--app-radius-xs);
+  }
+}
+
+.no-redirect {
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: text;
+  @include text-ellipsis;
 }
 </style>
